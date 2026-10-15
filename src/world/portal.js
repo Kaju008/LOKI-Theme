@@ -25,7 +25,7 @@ export function createPortal({ radius = 60 } = {}) {
         vec3 deep=vec3(0.05,0.12,0.22), mid=vec3(0.15,0.85,0.75), hot=vec3(1.0,0.85,0.55);
         vec3 col=mix(deep, mid, n)*(0.35+arms*0.9);
         col+=hot*pow(n,4.0)*arms*1.4;
-        col+=vec3(0.85,1.0,0.95)*smoothstep(0.3,0.0,r)*0.55;          // light at the end
+        col+=vec3(0.85,1.0,0.95)*smoothstep(0.3,0.0,r)*0.3;          // light at the end
         col*=smoothstep(1.0,0.86,r)*(0.55+0.45*smoothstep(0.0,0.6,r));
         col*=1.0+uPulse;
         gl_FragColor=vec4(col*0.42,1.0);

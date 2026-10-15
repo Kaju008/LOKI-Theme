@@ -255,6 +255,8 @@ function frame(now) {
     cam.lookAt(camTgt);
     if (Math.abs(cam.fov - s.fov) > 0.01) { cam.fov = s.fov; cam.updateProjectionMatrix(); }
     const ch = chapterOf(sp * max);
+    // bloom per chapter (the contact portal is a huge light source — keep its glow from veiling Kaju)
+    if (flight.k >= 1) { const B = [0.85, 0.75, 0.8, 0.9, 0.45]; const i = Math.min(3, Math.floor(ch)), f = ch - i; bloom.strength = B[i] + (B[i + 1] - B[i]) * f; }
     world.update(t, dt, ch);
     renderPass.scene = world.scene; renderPass.camera = cam;
     updateDOM(y, ch);
