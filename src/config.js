@@ -19,8 +19,8 @@ export const SITE = {
 // head = where the face sits in the image (x, y from top-left, 0–1) — used for the camera close-up.
 export const HERO = {
   throne: { src: 'assets/hero/throne.webp', srcSm: 'assets/hero/throne-sm.webp', aspect: 1024 / 1536, height: 3.0, head: [0.475, 0.215] },
-  back: { src: 'assets/hero/back.webp', srcSm: 'assets/hero/back-sm.webp', aspect: 1024 / 1536, height: 2.25, head: [0.54, 0.06] },
-  stand: { src: 'assets/hero/back.webp', srcSm: 'assets/hero/back-sm.webp', aspect: 1024 / 1536, height: 2.25, head: [0.54, 0.06] },
+  back: { src: 'assets/hero/back.webp', srcSm: 'assets/hero/back-sm.webp', aspect: 1024 / 1536, height: 3.1, head: [0.54, 0.06] },
+  stand: { src: 'assets/hero/gate.webp', srcSm: 'assets/hero/gate-sm.webp', aspect: 1024 / 1536, height: 3.8, head: [0.52, 0.07] },
 };
 
 // Portfolio. p: 'ig' (Instagram reel) or 'yt' (YouTube). id = the code in the link.

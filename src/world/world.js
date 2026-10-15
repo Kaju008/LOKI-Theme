@@ -135,7 +135,7 @@ export async function createWorld(renderer, tier) {
   let watcher;
   if (HERO.back) { watcher = createHeroCard(HERO.back, loader, tier); }
   else { watcher = await createFigure({ pose: 'standing', env, cape: true }); watcher.group.rotation.y = Math.PI; }
-  watcher.group.position.set(0, 0, -7);
+  watcher.group.position.set(0, 0, -5);
   work.add(watcher.group);
   updaters.push((t, dt, cam) => watcher.update(t, cam));
   const workLight = new THREE.PointLight(0x7af0ff, 20, 16, 2); workLight.position.set(0, 5, -10); work.add(workLight);
@@ -183,10 +183,10 @@ export async function createWorld(renderer, tier) {
   let traveller;
   if (HERO.stand) { traveller = createHeroCard(HERO.stand, loader, tier); }
   else { traveller = await createFigure({ pose: 'standing', env, cape: true }); traveller.group.rotation.y = Math.PI; }
-  traveller.group.position.set(0, 0, -42);
+  traveller.group.position.set(0, 0, -28);
   contact.add(traveller.group);
   updaters.push((t, dt, cam) => traveller.update(t, cam));
-  const cl = new THREE.PointLight(0x7affd0, 20, 20, 2); cl.position.set(0, 4, -38); contact.add(cl);
+  const cl = new THREE.PointLight(0x7affd0, 20, 20, 2); cl.position.set(0, 4, -24); contact.add(cl);
   [
     [{ seed: 121, r: 7, pillars: 3, crystalColor: 0x39ffb0 }, [-30, REG.contact + 4, -60]],
     [{ seed: 123, r: 8, pillars: 4, crystalColor: 0xb18cff }, [34, REG.contact + 8, -80]],
