@@ -90,7 +90,7 @@ function buildWork(openPlayer) {
     b.style.setProperty('--c1', c1); b.style.setProperty('--c2', c2);
     b.style.setProperty('--d', `${-(i * 0.73) % 6}s`); b.style.setProperty('--dur', `${6 + (i % 4)}s`);
     b.setAttribute('aria-label', `Play: ${w.t}`);
-    b.innerHTML = `<span class="orb-ring"></span><span class="orb-glass"><img src="${thumb(w)}" alt="" loading="lazy" decoding="async"></span>
+    b.innerHTML = `<span class="orb-ring"></span><span class="orb-glass"><img src="${thumb(w)}" alt="" loading="eager" decoding="async"></span>
       <svg class="orb-ph" viewBox="0 0 100 100"><circle cx="50" cy="50" r="49"/></svg><span class="orb-play"></span>
       <span class="orb-meta"><span class="orb-cat">${w.cat}</span><span class="orb-t">${w.t}</span></span>`;
     b.querySelector('.orb-ph circle').style.setProperty('--circ', (Math.PI * 98).toFixed(1));

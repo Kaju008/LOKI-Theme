@@ -199,7 +199,7 @@ export function createStrands({ origin = new THREE.Vector3(0, 3.5, -1.5), count 
         float fil=pow(1.0-abs(vnoise(vec2(vT*90.0-uTime*uSp*20.0, v*3.0+uSeed*7.0))*2.0-1.0), 10.0);
         float pulse=pow(fract(vT*2.2-uTime*uSp*1.6+uSeed), 8.0);
         float a=body*(0.16+flow*0.38) + core*(0.55+flow*0.9+pulse*2.2) + fil*body*0.6;
-        a*=smoothstep(0.0,0.04,vT)*smoothstep(1.0,0.6,vT)*uAlpha;
+        a*=smoothstep(0.0,0.04,vT)*smoothstep(1.0,0.6,vT)*uAlpha*0.62;
         vec3 c=mix(uC, vec3(1.0), core*0.22+pulse*core*0.3);
         gl_FragColor=vec4(c*a,1.0);
       }`,

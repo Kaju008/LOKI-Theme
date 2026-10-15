@@ -153,7 +153,10 @@ body.live .rail { opacity: 1; }
 .rail a.on { color: var(--ink); }
 .rail a.on::before { background: var(--em); border-color: var(--em); box-shadow: 0 0 10px var(--em); }
 .rail b { font: 500 12px/1 var(--f-display); letter-spacing: .1em; }
-.rail span { font: 500 9px/1 var(--f-display); letter-spacing: .28em; text-transform: uppercase; }
+.rail span { font: 500 9px/1 var(--f-display); letter-spacing: .28em; text-transform: uppercase; opacity: 0; transform: translateX(-6px); transition: opacity .4s, transform .4s; }
+.rail:hover span { opacity: 1; transform: none; }
+.rail a.on span { opacity: .9; transform: none; }
+body[data-chapter="skills"] .rail, body[data-chapter="work"] .rail { opacity: .35; }
 
 /* =========================== STORY =========================== */
 #story { position: relative; z-index: 2; visibility: hidden; }
@@ -184,7 +187,7 @@ body.live #story { visibility: visible; }
 .mot-of i:last-child { transform: scaleX(-1); }
 .hero-sub { margin: 24px 0 0; font: 500 clamp(10px, 1.05vw, 13px)/1.4 var(--f-display); letter-spacing: .32em; text-transform: uppercase; color: var(--ink-2); }
 .hero-sub b { color: var(--gold); font-weight: 500; margin: 0 .6em; }
-.hero-quote { position: absolute; left: clamp(24px, 9vw, 150px); top: 50%; transform: translateY(-50%); max-width: min(560px, 46vw); display: grid; gap: 14px; opacity: 0; pointer-events: none; }
+.hero-quote { position: absolute; left: clamp(24px, 12vw, 210px); top: 50%; transform: translateY(-50%); max-width: min(560px, 46vw); display: grid; gap: 14px; opacity: 0; pointer-events: none; }
 .hero-quote::before { content: ''; position: absolute; inset: -40% -60% -40% -40vw; z-index: -1; background: radial-gradient(closest-side, rgba(1, 2, 6, .85), rgba(1, 2, 6, .5) 55%, transparent); }
 .hero-quote span { font: 400 clamp(13px, 1.3vw, 17px)/1.3 var(--f-display); letter-spacing: .32em; text-transform: uppercase; color: var(--ink-2); }
 .hero-quote b { font: 600 clamp(44px, 6.4vw, 104px)/1 var(--f-cinzel); letter-spacing: .06em; text-transform: uppercase; color: #fff; text-shadow: 0 4px 40px rgba(0, 0, 0, .8); }

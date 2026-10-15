@@ -175,10 +175,10 @@ export async function createWorld(renderer, tier) {
     }
   }
   const traveller = createHeroCard(HERO.stand, loader, tier, { rim: new THREE.Color(1.0, 0.82, 0.5), rimDir: [0, 1], rimK: 1.25, back: 1, tint: new THREE.Color(0.95, 0.92, 0.9), ambient: new THREE.Color(0.05, 0.04, 0.03), turn: 0.25 });
-  traveller.group.position.set(0, 0, -7.5);
+  traveller.group.position.set(0, 0, -16);
   contact.add(traveller.group);
   updaters.push((t, dt, cam) => traveller.update(t, cam));
-  const cl = new THREE.PointLight(0xffd8a0, 24, 18, 2); cl.position.set(0, 5, -16); contact.add(cl);
+  const cl = new THREE.PointLight(0xffd8a0, 24, 18, 2); cl.position.set(0, 5, -24); contact.add(cl);
   cBridge.uniforms.uBoost.value = 0.5;
   [
     [121, 8, [-36, REG.contact + 4, -70]], [123, 9, [40, REG.contact + 10, -95]], [127, 4, [-16, REG.contact - 8, -22]],

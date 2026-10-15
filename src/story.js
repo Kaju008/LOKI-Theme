@@ -24,8 +24,8 @@ export function createRig(camera, REG, heroHead, { card = false } = {}) {
     ['skills', 0.0, { t: [0, REG.skills, -62], r: 78, az: 0, el: 3, fov: 42 }],
     ['skills', 0.5, { t: [0, REG.skills, -62], r: 66, az: 6, el: 5, fov: 42 }],
     ['skills', 1.0, { t: [0, REG.skills, -62], r: 62, az: 10, el: 4, fov: 42 }],
-    ['contact', 0.0, { t: [0, REG.contact + 22, -200], r: 206, az: 0, el: -4.6, fov: 46 }],
-    ['contact', 1.0, { t: [0, REG.contact + 26, -220], r: 226, az: -2.5, el: -5, fov: 44 }],
+    ['contact', 0.0, { t: [0, REG.contact + 14, -200], r: 205, az: 0, el: -2.1, fov: 46 }],
+    ['contact', 1.0, { t: [0, REG.contact + 15, -220], r: 225, az: 0, el: -2.3, fov: 44 }],
   ];
   let keys = [];
   function refresh() {
