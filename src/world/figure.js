@@ -139,39 +139,67 @@ export async function createFigure({ pose = 'seated', env, cape = true, height =
   };
 }
 
-// Photoreal render on a camera-facing card (used when HERO images are set)
-export function createHeroCard(def, loader, tier) {
+// Photoreal render on a camera-facing card (used when HERO images are set).
+// The shader integrates it into the scene: a directional rim light taken
+// from the silhouette's own edge normal (so light wraps the side facing the
+// strands / portal), a grade toward the scene's ambient colour, ground
+// occlusion at the feet and a faded reflection on the glass bridge.
+export function createHeroCard(def, loader, tier, opts = {}) {
+  const { rim = new THREE.Color(0.35, 1.0, 0.8), rimDir = [0, 1], rimK = 1.0, back = 0, tint = new THREE.Color(0.86, 0.92, 1.05), ambient = new THREE.Color(0.02, 0.05, 0.08), reflect = true, exposure = 1.0, turn = 0.8 } = opts;
   const url = (tier && tier.mobile && def.srcSm) ? def.srcSm : def.src;
   const tex = loader.load(url);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
-  const u = { map: { value: tex }, uTime: { value: 0 }, uRim: { value: new THREE.Color(0.25, 1.0, 0.75) } };
-  const mat = new THREE.ShaderMaterial({
-    uniforms: u, transparent: true, depthWrite: true,
-    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
-    fragmentShader: `uniform sampler2D map; uniform float uTime; uniform vec3 uRim; varying vec2 vUv;
-      void main(){ vec4 c = texture2D(map, vUv); if (c.a < 0.03) discard;
-        // soft edge glow: sample alpha around to find the silhouette edge
-        float e = 0.0; vec2 px = vec2(1.0/1024.0, 1.0/1536.0)*3.0;
-        e += texture2D(map, vUv+vec2(px.x,0.0)).a + texture2D(map, vUv-vec2(px.x,0.0)).a + texture2D(map, vUv+vec2(0.0,px.y)).a + texture2D(map, vUv-vec2(0.0,px.y)).a;
-        float edge = clamp(1.0 - e*0.25, 0.0, 1.0) * c.a;
-        vec3 col = c.rgb * 1.05;                                  // texture is decoded to linear by WebGL
-        col += uRim * edge * (0.6 + 0.2*sin(uTime*1.3));
-        gl_FragColor = vec4(col, c.a); }`,
-  });
+  const u = {
+    map: { value: tex }, uTime: { value: 0 }, uRim: { value: rim }, uRimDir: { value: new THREE.Vector2(...rimDir).normalize() }, uRimK: { value: rimK }, uBack: { value: back },
+    uTint: { value: tint }, uAmb: { value: ambient }, uExp: { value: exposure }, uPx: { value: new THREE.Vector2(1 / 1024, 1 / 1536) }, uRefl: { value: 0 },
+  };
+  const frag = /* glsl */ `
+    uniform sampler2D map; uniform float uTime,uRimK,uBack,uExp,uRefl; uniform vec3 uRim,uTint,uAmb; uniform vec2 uRimDir,uPx; varying vec2 vUv;
+    float A(vec2 o){ return texture2D(map, vUv+o).a; }
+    void main(){
+      vec4 c=texture2D(map, vUv);
+      if(c.a<0.03) discard;
+      // blurred alpha + its gradient = distance into the silhouette and the outward edge normal
+      vec2 s=uPx*5.0;
+      float aR=A(vec2(s.x,0.0)), aL=A(vec2(-s.x,0.0)), aU=A(vec2(0.0,s.y)), aD=A(vec2(0.0,-s.y));
+      float aR2=A(vec2(s.x*2.4,0.0)), aL2=A(vec2(-s.x*2.4,0.0)), aU2=A(vec2(0.0,s.y*2.4)), aD2=A(vec2(0.0,-s.y*2.4));
+      float blur=(aR+aL+aU+aD)*0.15+(aR2+aL2+aU2+aD2)*0.1;
+      vec2 grad=vec2((aR+aR2)-(aL+aL2), (aU+aU2)-(aD+aD2));
+      vec2 n=length(grad)>1e-3 ? normalize(-grad) : vec2(0.0);
+      float band=clamp((1.0-blur)*1.6,0.0,1.0)*c.a;
+      float dirK=max(dot(n,uRimDir),0.0);
+      float rimL=band*mix(pow(dirK,1.5), 0.55+0.45*max(n.y,0.0), uBack);
+      vec3 col=c.rgb*uExp;
+      float lum=dot(col,vec3(0.299,0.587,0.114));
+      col=mix(col, col*uTint, 0.6) + uAmb*(1.0-smoothstep(0.0,0.25,lum));   // scene grade + ambient lift in the shadows
+      col*=mix(0.62,1.0,smoothstep(0.0,0.12,vUv.y));                          // ground occlusion
+      col+=uRim*rimL*uRimK*(0.85+0.15*sin(uTime*1.3));
+      float a=c.a;
+      if(uRefl>0.5){ a*=0.22*smoothstep(0.55,1.0,vUv.y); col*=0.55; }
+      gl_FragColor=vec4(col,a);
+    }`;
+  const vert = `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} `;
+  const mat = new THREE.ShaderMaterial({ uniforms: u, transparent: true, depthWrite: true, vertexShader: vert, fragmentShader: frag });
   const H = def.height, W = H * def.aspect;
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat);
   mesh.position.y = H / 2;
   const group = new THREE.Group();
   group.add(mesh);
+  if (reflect) {
+    const ru = { ...u, uRefl: { value: 1 } };
+    const rm = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.ShaderMaterial({ uniforms: ru, transparent: true, depthWrite: false, vertexShader: vert, fragmentShader: frag }));
+    rm.scale.y = -1; rm.position.y = -H / 2 - 0.02;
+    group.add(rm);
+  }
   const head = new THREE.Vector3((def.head[0] - 0.5) * W, (1 - def.head[1]) * H, 0.05);
   const p = new THREE.Vector3();
   return {
-    group, head, isCard: true,
+    group, head, isCard: true, uniforms: u,
     update(t, cam) {
       u.uTime.value = t;
       group.getWorldPosition(p);
-      group.rotation.y = Math.atan2(cam.position.x - p.x, cam.position.z - p.z) * 0.8;
+      group.rotation.y = Math.atan2(cam.position.x - p.x, cam.position.z - p.z) * turn;
     },
   };
 }

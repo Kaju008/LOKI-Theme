@@ -11,7 +11,7 @@ const ease = (x) => x * x * (3 - 2 * x);
 export function createRig(camera, REG, heroHead, { card = false } = {}) {
   const H = heroHead; // Vector3 — face of the figure on the throne
   const defs = [
-    ['hero', 0.0, { t: [0, 3.2, 0], r: 70, az: 0, el: 4, fov: 42 }],
+    ['hero', 0.0, { t: [0, 4.2, 0], r: 62, az: 0, el: 5, fov: 42 }],
     ['hero', 0.22, { t: [0, 2.9, 0], r: 14, az: 0, el: 3, fov: 40 }],
     ['hero', 0.42, { t: [0, 2.7, 0], r: 11.5, az: card ? 24 : 40, el: 9, fov: 40 }],
     ['hero', 0.6, { t: [0, 2.7, 0], r: 12, az: card ? -22 : -36, el: 4, fov: 40 }],
@@ -21,10 +21,11 @@ export function createRig(camera, REG, heroHead, { card = false } = {}) {
     ['about', 1.0, { t: [0, REG.about + 2, 0], r: 31, az: -10, el: -2, fov: 42 }],
     ['work', 0.0, { t: [0, REG.work + 4, -30], r: 34, az: 0, el: 2.5, fov: 44 }],
     ['work', 1.0, { t: [14, REG.work + 4, -30], r: 34, az: -14, el: 2.5, fov: 44 }],
-    ['skills', 0.0, { t: [0, REG.skills, -40], r: 38, az: 0, el: 0, fov: 42 }],
-    ['skills', 1.0, { t: [0, REG.skills, -40], r: 33, az: 12, el: 3, fov: 42 }],
-    ['contact', 0.0, { t: [0, REG.contact + 9, -80], r: 86, az: 0, el: 3, fov: 42 }],
-    ['contact', 1.0, { t: [0, REG.contact + 11, -95], r: 92, az: 0, el: 4, fov: 42 }],
+    ['skills', 0.0, { t: [0, REG.skills, -62], r: 78, az: 0, el: 3, fov: 42 }],
+    ['skills', 0.5, { t: [0, REG.skills, -62], r: 66, az: 6, el: 5, fov: 42 }],
+    ['skills', 1.0, { t: [0, REG.skills, -62], r: 62, az: 10, el: 4, fov: 42 }],
+    ['contact', 0.0, { t: [0, REG.contact + 22, -200], r: 206, az: 0, el: -4.6, fov: 46 }],
+    ['contact', 1.0, { t: [0, REG.contact + 26, -220], r: 226, az: -2.5, el: -5, fov: 44 }],
   ];
   let keys = [];
   function refresh() {

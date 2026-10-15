@@ -24,19 +24,21 @@
       <h1 class="gate-line" id="gate-line" aria-label="Creativity begins with a thought">
         <span class="w">Creativity</span> <span class="w">begins</span> <span class="w">with</span> <span class="w">a</span> <em class="w">thought.</em>
       </h1>
-      <div class="slider" id="slider" role="slider" aria-label="Slide to begin" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
-        <div class="slider-liquid"><i></i><i></i><i></i></div>
-        <div class="slider-glow"></div>
-        <span class="slider-label" id="slider-label">Slide to begin creating</span>
-        <div class="slider-knob" id="slider-knob"><span class="knob-core"></span></div>
+      <div class="slider-wrap">
+        <div class="slider-halo" aria-hidden="true"></div>
+        <div class="slider" id="slider" role="slider" aria-label="Slide to begin" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+          <div class="slider-liquid" aria-hidden="true"><i></i><i></i><i></i></div>
+          <span class="slider-label" id="slider-label">Slide to begin creating</span>
+          <div class="slider-knob" id="slider-knob"><span class="knob-core"></span></div>
+        </div>
+        <span class="load" aria-hidden="true"><i id="load-bar"></i></span>
       </div>
-      <p class="gate-state" id="gate-state"><span class="mode" id="mode-a">Before</span><span class="bar"><i id="load-bar"></i></span><span class="mode" id="mode-b">After</span></p>
     </div>
-    <p class="gate-hint" id="gate-hint">Move your cursor through the particles</p>
+    <p class="gate-hint" id="gate-hint">Move your cursor — the thought follows you</p>
     <button class="skip" id="skip" type="button">Skip intro</button>
   </div>
   <div class="intro-caption" id="intro-caption" aria-hidden="true"><span>…and from one thought,</span><b>a universe of timelines.</b></div>
-  <div class="flash" id="flash"></div>
+  <div class="veil" id="veil" aria-hidden="true"></div>
 
   <!-- ============ HUD ============ -->
   <header class="hud" id="hud">
@@ -78,17 +80,17 @@
     <section id="hero" class="sec" aria-label="Master of Timeline">
       <div class="stage">
         <div class="hero-title" id="hero-title">
-          <p class="eyebrow"><span class="dot"></span>The multiverse of edits</p>
+          <p class="eyebrow gold">Kaju Soni presents</p>
           <h2 class="mot" aria-label="Master of Timeline">
-            <span class="mot-a" data-text="MASTER">MASTER</span>
-            <span class="mot-of">of</span>
-            <span class="mot-b" data-text="TIMELINE">TIMELINE</span>
+            <span class="mot-a">Master</span>
+            <span class="mot-of"><i></i>of the<i></i></span>
+            <span class="mot-b">Timeline</span>
           </h2>
-          <p class="hero-sub">Kaju Soni <i></i> Video Editor · Motion Designer · AI Filmmaker</p>
+          <p class="hero-sub">Video Editor <b>·</b> Motion Designer <b>·</b> AI Filmmaker</p>
         </div>
-        <div class="hero-quote" id="hero-quote"><span>Every frame. Every cut.</span><b>Every universe.</b></div>
+        <div class="hero-quote" id="hero-quote"><span>I don't just edit videos.</span><b>I bend time.</b><small>Every cut is a choice — every choice, a universe.</small></div>
         <div class="scroll-cue" id="scroll-cue"><span class="mouse"><i></i></span>Scroll to enter the timeline</div>
-        <div class="hero-hint" id="hero-hint">Hover the floating islands</div>
+        <div class="hero-hint" id="hero-hint">Drag the islands · spin the planets</div>
       </div>
     </section>
 
@@ -129,6 +131,7 @@
           <p class="sec-sub">Each orb is a timeline. Tap one to play it.</p>
         </header>
         <div class="orbit-wrap">
+          <svg class="orbit-back" id="orbit-back" aria-hidden="true"></svg>
           <div class="orbit-track" id="orbit-track">
             <svg class="orbit-lines" id="orbit-lines" aria-hidden="true"></svg>
           </div>
@@ -142,10 +145,12 @@
         <header class="sec-head center">
           <p class="eyebrow"><span class="dot"></span>04 · Arsenal</p>
           <h2 class="h-cinzel">Skills &amp; Tools</h2>
+          <p class="sec-sub">Everything orbits the edit.</p>
         </header>
         <div class="skills" id="skills-grid">
-          <div class="sk-group"><p class="sk-label">Craft</p><div class="sk-row" id="sk-craft"></div></div>
-          <div class="sk-group"><p class="sk-label">AI</p><div class="sk-row" id="sk-ai"></div></div>
+          <p class="sk-label l">Craft</p><p class="sk-label r">AI</p>
+          <div class="sk-row" id="sk-craft"></div>
+          <div class="sk-row" id="sk-ai"></div>
         </div>
         <p class="sk-foot">Editing · Motion design · Colour · Sound · Story · GenAI pipelines</p>
       </div>
@@ -156,7 +161,7 @@
         <div class="contact">
           <div class="portal-copy">
             <p class="eyebrow"><span class="dot"></span>05 · Contact</p>
-            <h2 class="h-cinzel big">Let's<br>create<br>together</h2>
+            <h2 class="h-cinzel big">Let's <br>create <br>together</h2>
             <p class="portal-sub">Collaborations, projects, or just to say hi — the portal is open.</p>
           </div>
           <form class="form glass" id="form" novalidate>
@@ -177,7 +182,7 @@
           </form>
         </div>
         <footer class="foot">
-          <span>© <span id="year"></span> Kaju Soni · Bengaluru</span>
+          <span>© <span id="year"></span> Kaju Soni · Bengaluru <a class="credit" href="https://github.com/Kaju008/LOKI-Theme/blob/main/CREDITS.md" target="_blank" rel="noopener">Image credits: ESO, NASA/ESA, Solar System Scope (CC BY 4.0)</a></span>
           <span class="foot-x"><a class="xbtn sm" href="games.html">Games</a><a class="xbtn sm" href="lab.html">AI Lab</a><button class="link" id="replay" type="button">Replay intro ↺</button></span>
         </footer>
       </div>

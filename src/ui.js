@@ -42,29 +42,44 @@ function layoutWork() {
   trackW = pts[pts.length - 1][0] + W * (mob ? 0.5 : 0.42);
   track.style.width = trackW + 'px';
   orbs.forEach((o, i) => { o.style.left = pts[i][0] + 'px'; o.style.top = pts[i][1] + 'px'; });
-  // energy lines
+  // energy beams: a soft wide glow, a crisp core and comets of light travelling along it,
+  // plus a deeper, dimmer layer of beams behind that moves slower (parallax depth)
   const svg = $('#orbit-lines');
   svg.setAttribute('width', trackW); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${trackW} ${H}`);
   const smooth = (P) => P.reduce((d, p, i) => {
-    if (!i) return `M${p[0]},${p[1]}`;
+    if (!i) return `M${p[0].toFixed(1)},${p[1].toFixed(1)}`;
     const q = P[i - 1], mx = (q[0] + p[0]) / 2;
-    return d + ` C${mx},${q[1]} ${mx},${p[1]} ${p[0]},${p[1]}`;
+    return d + ` C${mx.toFixed(1)},${q[1].toFixed(1)} ${mx.toFixed(1)},${p[1].toFixed(1)} ${p[0].toFixed(1)},${p[1].toFixed(1)}`;
   }, '');
   const ext = [[pts[0][0] - W, pts[0][1] + 40], ...pts, [pts[pts.length - 1][0] + W * 0.6, pts[pts.length - 1][1] - 40]];
+  const main = smooth(ext);
   let branches = '';
   for (let i = 0; i < pts.length - 2; i += 2) {
     const a = pts[i], b = pts[i + 2];
     const my = Math.min(a[1], b[1]) - H * (0.16 + (i % 4) * 0.03);
-    branches += `<path d="M${a[0]},${a[1]} Q${(a[0] + b[0]) / 2},${my} ${b[0]},${b[1]}" stroke="url(#gb)" opacity=".35"/>`;
+    const d = `M${a[0]},${a[1]} Q${(a[0] + b[0]) / 2},${my} ${b[0]},${b[1]}`;
+    branches += `<path d="${d}" class="br-core"/><path d="${d}" class="comet slow" style="animation-delay:${(-i * 0.37).toFixed(2)}s"/>`;
   }
+  const comets = [0, 1, 2, 3].map((k) => `<path d="${main}" class="comet" style="animation-delay:${(-k * 1.9).toFixed(2)}s;animation-duration:${(7 + k * 1.3).toFixed(1)}s"/>`).join('');
+  const nodes = pts.map((p) => `<circle cx="${p[0]}" cy="${p[1]}" r="3" class="node"/>`).join('');
   svg.innerHTML = `<defs>
-      <linearGradient id="ga" x1="0" x2="1"><stop offset="0" stop-color="#3dffb5"/><stop offset=".35" stop-color="#5adfff"/><stop offset=".65" stop-color="#9d80ff"/><stop offset="1" stop-color="#ff6fd8"/></linearGradient>
-      <linearGradient id="gb" x1="0" x2="1"><stop offset="0" stop-color="#9d80ff"/><stop offset="1" stop-color="#3dffb5"/></linearGradient>
-      <filter id="gl" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs>
-    <path d="${smooth(ext)}" stroke="url(#ga)" stroke-width="6" opacity=".35" filter="url(#gl)"/>
-    <path d="${smooth(ext)}" stroke="url(#ga)" opacity=".75"/>
-    <path class="flow" d="${smooth(ext)}" stroke="#eafff8" opacity=".9"/>
-    ${branches}`;
+      <linearGradient id="ga" x1="0" x2="1"><stop offset="0" stop-color="#4fe8b8"/><stop offset=".35" stop-color="#66d4ff"/><stop offset=".7" stop-color="#9a86ff"/><stop offset="1" stop-color="#e3b765"/></linearGradient>
+      <filter id="gl" x="-10%" y="-60%" width="120%" height="220%"><feGaussianBlur stdDeviation="7"/></filter>
+      <filter id="gc" x="-20%" y="-100%" width="140%" height="300%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <path d="${main}" class="beam-glow" stroke="url(#ga)" filter="url(#gl)"/>
+    <path d="${main}" class="beam-core" stroke="url(#ga)"/>
+    <g filter="url(#gc)">${comets}${branches}</g>${nodes}`;
+  // depth layer
+  const back = $('#orbit-back');
+  const BW = trackW * 0.65 + W;
+  back.setAttribute('width', BW); back.setAttribute('height', H); back.setAttribute('viewBox', `0 0 ${BW} ${H}`);
+  let bp = '';
+  for (let k = 0; k < 3; k++) {
+    const P = []; for (let x = -200; x < BW + 200; x += 260) P.push([x, H * (0.3 + k * 0.22) + Math.sin(x * 0.004 + k * 2) * H * 0.08]);
+    const d = smooth(P);
+    bp += `<path d="${d}" class="deep" style="opacity:${(0.18 - k * 0.04).toFixed(2)}"/><path d="${d}" class="comet deep-c" style="animation-delay:${(-k * 2.3).toFixed(1)}s"/>`;
+  }
+  back.innerHTML = `<defs><filter id="gd"><feGaussianBlur stdDeviation="3"/></filter></defs><g filter="url(#gd)">${bp}</g>`;
 }
 function buildWork(openPlayer) {
   track = $('#orbit-track');
@@ -90,6 +105,7 @@ export function setWorkProgress(p) {
   if (!track) return;
   const max = Math.max(0, trackW - innerWidth);
   track.style.transform = `translate3d(${-p * max}px,0,0)`;
+  $('#orbit-back').style.transform = `translate3d(${-p * max * 0.55}px,0,0)`;
   $('#work-bar').style.transform = `scaleX(${p})`;
   const idx = Math.min(WORKS.length, Math.max(1, Math.round(p * (WORKS.length - 1)) + 1));
   $('#work-count').textContent = String(idx).padStart(2, '0');
@@ -129,17 +145,45 @@ function buildPlayer(onOpen, onClose) {
 }
 
 // ------------------------------------------------------------------ SKILLS
+// Glass medallions that are flung out of the black hole into two orbits —
+// Craft on the left arc, AI on the right — as the chapter opens.
+let tools = [];
 function buildSkills() {
   let i = 0;
-  const make = (t) => {
+  const make = (t, group) => {
     const el = document.createElement('div');
-    el.className = 'tool'; el.style.setProperty('--c', t.c); el.style.setProperty('--i', i++);
+    el.className = 'tool ' + group; el.style.setProperty('--c', t.c); el.style.setProperty('--i', i++);
+    el.tabIndex = 0;
     const glyph = t.icon ? `<img src="${t.icon}" alt="">` : `<b class="${t.m.length > 2 ? 'long' : ''}">${t.m}</b>`;
-    el.innerHTML = `<span class="burst" style="background:${t.c}"></span><span class="tool-orb">${glyph}</span><span>${t.n}</span>`;
+    el.innerHTML = `<span class="tool-orb"><span class="tool-ring"></span>${glyph}</span><span class="tool-txt"><span class="tool-n">${t.n}</span>${t.d ? `<span class="tool-d">${t.d}</span>` : ''}</span>`;
     return el;
   };
-  TOOLS.craft.forEach((t) => $('#sk-craft').appendChild(make(t)));
-  TOOLS.ai.forEach((t) => $('#sk-ai').appendChild(make(t)));
+  TOOLS.craft.forEach((t) => { const el = make(t, 'craft'); $('#sk-craft').appendChild(el); tools.push({ el, g: 0 }); });
+  TOOLS.ai.forEach((t) => { const el = make(t, 'ai'); $('#sk-ai').appendChild(el); tools.push({ el, g: 1 }); });
+}
+const ez = (x) => 1 - Math.pow(1 - x, 3);
+export function layoutSkills(cx, cy, reveal, t) {
+  const W = innerWidth, H = innerHeight;
+  if (W < 760) { tools.forEach((o, k) => { const r = Math.min(1, Math.max(0, reveal * 2.2 - k * 0.05)); o.el.style.transform = `scale(${0.4 + 0.6 * ez(r)})`; o.el.style.opacity = ez(r); }); return; }
+  const rx = Math.min(W * 0.34, 560), ry = Math.min(H * 0.36, 360);
+  const oy = cy + H * 0.05;
+  const counts = [tools.filter((o) => !o.g).length, tools.filter((o) => o.g).length];
+  const idx = [0, 0];
+  tools.forEach((o, k) => {
+    const n = counts[o.g], j = idx[o.g]++;
+    const top = 0.78, bot = -1.15;                                            // arc from upper side to lower side (clear of the heading)
+    const f = n > 1 ? j / (n - 1) : 0.5;
+    const a = top + (bot - top) * f;
+    const th = o.g ? a : Math.PI - a;                                         // AI: right arc, Craft: left arc, both top→bottom
+    const sx = cx + Math.cos(th) * rx, sy = oy - Math.sin(th) * ry;
+    const r = Math.min(1, Math.max(0, reveal * 1.9 - (o.g ? j + 0.5 : j) * 0.085));
+    const e = ez(r);
+    const bob = Math.sin(t * 0.9 + k * 1.3) * 6 * e;
+    const x = cx + (sx - cx) * e, y = cy + (sy - cy) * e + bob;
+    o.el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(${o.g ? '-33px' : 'calc(-100% + 33px)'},-50%) scale(${(0.15 + 0.85 * e).toFixed(3)})`;
+    o.el.style.opacity = Math.min(1, e * 1.4).toFixed(3);
+    o.el.classList.toggle('in', r >= 1);
+  });
 }
 
 // ------------------------------------------------------------------ CONTACT

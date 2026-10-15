@@ -112,12 +112,12 @@ export function createIntro(tier) {
   const start = new Float32Array(N * 3), burst = new Float32Array(N * 3), rand = new Float32Array(N * 4);
   for (let i = 0; i < N; i++) {
     // start: wide drifting dust cloud
-    const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, rr = 2.2 + Math.pow(rnd(), 0.6) * 9;
+    const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, rr = 1.4 + Math.pow(rnd(), 0.8) * 4.5;
     const s = Math.sqrt(1 - u * u);
-    start[i * 3] = Math.cos(th) * s * rr; start[i * 3 + 1] = u * rr * 0.6; start[i * 3 + 2] = Math.sin(th) * s * rr - 2;
+    start[i * 3] = Math.cos(th) * s * rr; start[i * 3 + 1] = u * rr * 0.7; start[i * 3 + 2] = Math.sin(th) * s * rr;
     const bx = brain[i * 3], by = brain[i * 3 + 1], bz = brain[i * 3 + 2];
     const bl = Math.hypot(bx, by, bz) || 1, f = 2.5 + Math.pow(rnd(), 2) * 14;
-    burst[i * 3] = (bx / bl) * f + (rnd() - 0.5) * 2; burst[i * 3 + 1] = (by / bl) * f + (rnd() - 0.5) * 2; burst[i * 3 + 2] = (bz / bl) * f + (rnd() - 0.5) * 2 + 3;
+    burst[i * 3] = (bx / bl) * f * 0.8 + (rnd() - 0.5) * 2; burst[i * 3 + 1] = (by / bl) * f * 0.6 + (rnd() - 0.5) * 2; burst[i * 3 + 2] = (bz / bl) * f * 0.5 + 4 + rnd() * 14;
     rand[i * 4] = rnd(); rand[i * 4 + 1] = rnd(); rand[i * 4 + 2] = rnd(); rand[i * 4 + 3] = rnd();
   }
   const geo = new THREE.BufferGeometry();
@@ -153,7 +153,7 @@ export function createIntro(tier) {
         // burst
         float bb = pow(uBurst, 1.6);
         vec3 bp = (modelMatrix*vec4(aBurst,0.0)).xyz;
-        if (uBurst > 0.0) { wp.xyz += bp * bb * (0.7 + aRand.w) + curl(wp.xyz*0.35 + uTime*0.2) * bb * 1.4; }
+        if (uBurst > 0.0) { wp.xyz += bp * bb * (0.7 + aRand.w) + curl(wp.xyz*0.35 + uTime*0.2) * bb * 0.8; }
         // mouse repel
         vec3 d = wp.xyz - uMouse; float m = smoothstep(0.75, 0.0, length(d)) * uMouseF * (1.0-uBurst);
         wp.xyz += normalize(d+1e-4) * m * 0.42;
@@ -166,11 +166,11 @@ export function createIntro(tier) {
         vec3 col = mix(g, c, smoothstep(0.2,0.9,aRand.w));
         if (aRand.y > 0.965) col = mix(v, a, step(0.985, aRand.y));
         float wave = smoothstep(0.86, 1.0, sin(dot(position, normalize(vec3(0.3,0.9,0.4)))*7.0 - uTime*2.4 + aRand.x*0.6));
-        float lit = (0.04 + 0.62*aFold*aFold) * t + 0.4*(1.0-t);
+        float lit = (0.035 + 0.5*aFold*aFold) * t + 0.12*(1.0-t);
         col = col*lit + vec3(0.6,1.0,0.9)*wave*t*0.45*aFold + vec3(m*1.2);
         col = mix(col, mix(col, vec3(0.6,0.7,1.0), 0.4), bb);
         vCol = col;
-        vA = mix(0.55*uDust, 0.62, t) * (1.0 - smoothstep(0.75,1.0,uBurst)*0.6) * smoothstep(0.08, 0.6, -mv.z);
+        vA = mix(0.35*uDust, 0.6, t) * (1.0 - smoothstep(0.75,1.0,uBurst)*0.6) * smoothstep(0.08, 0.6, -mv.z);
       }`,
     fragmentShader: /* glsl */ `
       varying vec3 vCol; varying float vA;
@@ -229,6 +229,21 @@ export function createIntro(tier) {
   warp.frustumCulled = false;
   scene.add(warp);
 
+  // a quiet, nearly still starfield
+  const SN = tier.mobile ? 900 : 2200, sp = new Float32Array(SN * 3), ss = new Float32Array(SN);
+  for (let i = 0; i < SN; i++) {
+    const v = new THREE.Vector3(rnd() * 2 - 1, rnd() * 2 - 1, rnd() * 2 - 1); if (v.lengthSq() > 1 || v.lengthSq() < 0.01) { i--; continue; }
+    v.normalize().multiplyScalar(60 + rnd() * 40); sp.set([v.x, v.y, v.z], i * 3); ss[i] = Math.pow(rnd(), 6);
+  }
+  const sGeo = new THREE.BufferGeometry();
+  sGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3)); sGeo.setAttribute('aS', new THREE.BufferAttribute(ss, 1));
+  const sMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: uniforms.uTime, uPR: uniforms.uPR }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `uniform float uTime,uPR; attribute float aS; varying float vB; void main(){ vB=(0.25+aS*0.9)*(0.85+0.15*sin(uTime*0.5+position.x)); vec4 mv=modelViewMatrix*vec4(position,1.0); gl_PointSize=uPR*(0.8+aS*2.2); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader: `varying float vB; void main(){ float d=length(gl_PointCoord-0.5); float a=exp(-d*d*30.0); gl_FragColor=vec4(vec3(0.82,0.88,1.0)*a*vB,1.0); }`,
+  });
+  const starPts = new THREE.Points(sGeo, sMat); starPts.frustumCulled = false; scene.add(starPts);
+
   // mouse
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
   const hit = new THREE.Vector3();
@@ -242,11 +257,23 @@ export function createIntro(tier) {
   addEventListener('pointermove', onMove, { passive: true });
   addEventListener('touchmove', onMove, { passive: true });
 
-  const state = { spin: 1 };
+  // camera orbits the brain with the pointer (and zooms in a touch toward the centre)
+  const state = { spin: 1, orbit: 1, dist: 4.7, angle: 0, lookZ: 0 };
+  const m = { x: 0, y: 0, sx: 0, sy: 0 };
+  const onPM = (e) => { const pt = e.touches ? e.touches[0] : e; m.x = pt.clientX / innerWidth - 0.5; m.y = pt.clientY / innerHeight - 0.5; };
+  addEventListener('pointermove', onPM, { passive: true });
   function update(t, dt) {
     uniforms.uTime.value = t;
     uniforms.uMouseF.value += ((mouseActive ? 1 : 0) - uniforms.uMouseF.value) * Math.min(1, dt * 3);
-    brainGroup.rotation.y = t * 0.16 * state.spin + Math.sin(t * 0.5) * 0.18;
+    m.sx += (m.x - m.sx) * Math.min(1, dt * 2.2); m.sy += (m.y - m.sy) * Math.min(1, dt * 2.2);
+    const az = m.sx * 0.9 * state.orbit, el = -m.sy * 0.5 * state.orbit;
+    const zoom = 1 - (1 - Math.min(1, Math.hypot(m.sx, m.sy) * 2.2)) * 0.07 * state.orbit;
+    const R = state.dist * zoom;
+    camera.position.set(Math.sin(az) * Math.cos(el) * R, 0.05 + Math.sin(el) * R, Math.cos(az) * Math.cos(el) * R);
+    camera.lookAt(0, 0, state.lookZ);
+    starPts.rotation.y = t * 0.004;
+    state.angle += dt * 0.16 * state.spin;
+    brainGroup.rotation.y = state.angle + Math.sin(t * 0.5) * 0.18;
     brainGroup.rotation.x = 0.12 + Math.sin(t * 0.37) * 0.06;
     brainGroup.rotation.z = Math.sin(t * 0.29) * 0.04;
     brainGroup.position.y = Math.sin(t * 0.8) * 0.04;
@@ -254,8 +281,8 @@ export function createIntro(tier) {
   }
   function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
   function dispose() {
-    removeEventListener('pointermove', onMove); removeEventListener('touchmove', onMove);
+    removeEventListener('pointermove', onMove); removeEventListener('touchmove', onMove); removeEventListener('pointermove', onPM); sGeo.dispose(); sMat.dispose();
     geo.dispose(); mat.dispose(); dGeo.dispose(); dMat.dispose(); wGeo.dispose(); wMat.dispose();
   }
-  return { scene, camera, uniforms, warp: wUni, update, resize, dispose, state };
+  return { scene, camera, uniforms, warp: wUni, update, resize, dispose, state, brainGroup };
 }

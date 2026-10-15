@@ -18,7 +18,7 @@ export const SITE = {
 // Each is a transparent PNG/WebP render in assets/hero/ (generated with ChatGPT from Kaju's character sheet).
 // head = where the face sits in the image (x, y from top-left, 0–1) — used for the camera close-up.
 export const HERO = {
-  throne: { src: 'assets/hero/throne.webp', srcSm: 'assets/hero/throne-sm.webp', aspect: 1024 / 1536, height: 3.0, head: [0.475, 0.215] },
+  throne: { src: 'assets/hero/throne.webp', srcSm: 'assets/hero/throne-sm.webp', aspect: 1024 / 1536, height: 4.0, head: [0.475, 0.215] },
   back: { src: 'assets/hero/back.webp', srcSm: 'assets/hero/back-sm.webp', aspect: 1024 / 1536, height: 3.1, head: [0.54, 0.06] },
   stand: { src: 'assets/hero/gate.webp', srcSm: 'assets/hero/gate-sm.webp', aspect: 1024 / 1536, height: 3.8, head: [0.52, 0.07] },
 };
@@ -64,22 +64,22 @@ export const ABOUT = {
 
 export const TOOLS = {
   craft: [
-    { n: 'Premiere Pro', m: 'Pr', c: '#9999ff' },
-    { n: 'After Effects', m: 'Ae', c: '#9999ff' },
-    { n: 'Photoshop', m: 'Ps', c: '#31a8ff' },
-    { n: 'Illustrator', m: 'Ai', c: '#ff9a00' },
-    { n: 'Audition', m: 'Au', c: '#00e4bb' },
-    { n: 'Figma', icon: 'assets/icons/figma.svg', c: '#a259ff' },
-    { n: 'Blender', icon: 'assets/icons/blender.svg', c: '#f5792a' },
-    { n: 'Element 3D', m: 'E3D', c: '#7cf2c4' },
+    { n: 'Premiere Pro', m: 'Pr', c: '#9999ff', d: 'Edit · 8 yrs' },
+    { n: 'After Effects', m: 'Ae', c: '#9999ff', d: 'Motion · VFX' },
+    { n: 'Photoshop', m: 'Ps', c: '#31a8ff', d: 'Thumbnails · Comp' },
+    { n: 'Illustrator', m: 'Ai', c: '#ff9a00', d: 'Vector · Brand' },
+    { n: 'Audition', m: 'Au', c: '#00e4bb', d: 'Sound design' },
+    { n: 'Figma', icon: 'assets/icons/figma.svg', c: '#a259ff', d: 'Storyboards' },
+    { n: 'Blender', icon: 'assets/icons/blender.svg', c: '#f5792a', d: '3D · Scenes' },
+    { n: 'Element 3D', m: 'E3D', c: '#7cf2c4', d: '3D in AE' },
   ],
   ai: [
-    { n: 'Claude Code', icon: 'assets/icons/claude.svg', c: '#d97757' },
-    { n: 'Google Antigravity', m: 'AG', c: '#7aa2ff' },
-    { n: 'Gemini · Nano Banana', icon: 'assets/icons/googlegemini.svg', c: '#8ab4ff' },
-    { n: 'Veo', m: 'Veo', c: '#6be4ff' },
-    { n: 'Higgsfield', m: 'Hf', c: '#c6ff5a' },
-    { n: 'Magnific AI', m: 'Mg', c: '#ff6ad5' },
-    { n: 'ElevenLabs', icon: 'assets/icons/elevenlabs.svg', c: '#ffffff' },
+    { n: 'Claude Code', icon: 'assets/icons/claude.svg', c: '#d97757', d: 'Build · Automate' },
+    { n: 'Google Antigravity', m: 'AG', c: '#7aa2ff', d: 'Agentic dev' },
+    { n: 'Gemini · Nano Banana', icon: 'assets/icons/googlegemini.svg', c: '#8ab4ff', d: 'Image gen' },
+    { n: 'Veo', m: 'Veo', c: '#6be4ff', d: 'Video gen' },
+    { n: 'Higgsfield', m: 'Hf', c: '#c6ff5a', d: 'Cinematic AI' },
+    { n: 'Magnific AI', m: 'Mg', c: '#ff6ad5', d: 'Upscale' },
+    { n: 'ElevenLabs', icon: 'assets/icons/elevenlabs.svg', c: '#ffffff', d: 'Voice' },
   ],
 };

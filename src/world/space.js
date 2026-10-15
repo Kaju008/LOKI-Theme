@@ -1,14 +1,18 @@
 import * as THREE from 'three';
 import { makeNoise } from '../core/glsl.js';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Rock geometry: noise-displaced icosphere with baked vertex colour variation
 export function rockGeometry(seed = 1, detail = 3, rough = 0.35, stretch = [1, 1, 1]) {
   const n = makeNoise(seed);
-  const g = new THREE.IcosahedronGeometry(1, detail);
+  let g = new THREE.IcosahedronGeometry(1, detail);
+  g.deleteAttribute('normal'); g.deleteAttribute('uv');
+  g = mergeVertices(g, 1e-4);
   const p = g.attributes.position, col = new Float32Array(p.count * 3), v = new THREE.Vector3();
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i);
-    const d = 1 + n.fbm(v.x * 1.4 + seed, v.y * 1.4, v.z * 1.4, 4) * rough + Math.abs(n(v.x * 4, v.y * 4, v.z * 4)) * -0.08;
+    const ridge = 1 - Math.abs(n(v.x * 3.1 + 7, v.y * 3.1, v.z * 3.1));
+    const d = 1 + n.fbm(v.x * 1.4 + seed, v.y * 1.4, v.z * 1.4, 6) * rough + ridge * ridge * 0.07 + Math.abs(n(v.x * 9, v.y * 9, v.z * 9)) * -0.035;
     v.multiplyScalar(d);
     v.set(v.x * stretch[0], v.y * stretch[1], v.z * stretch[2]);
     p.setXYZ(i, v.x, v.y, v.z);
@@ -24,10 +28,11 @@ export const rockMaterial = (opts = {}) => new THREE.MeshStandardMaterial({
   color: opts.color ?? 0x3a3f4a, roughness: 0.92, metalness: 0.08, vertexColors: true, envMapIntensity: 0.6, ...opts,
 });
 
-export function createAsteroids(tier, yRange = [-60, 700]) {
+export function createAsteroids(tier, yRange = [-60, 700], mat = null) {
   const N = tier.asteroids;
-  const geos = [rockGeometry(3, 2, 0.45), rockGeometry(11, 2, 0.6, [1.4, 0.8, 1]), rockGeometry(23, 2, 0.35, [1, 1.3, 0.9])];
-  const mat = rockMaterial({ color: 0x4a4f5c });
+  const d = tier.mobile ? 4 : 5;
+  const geos = [rockGeometry(3, d, 0.42), rockGeometry(11, d, 0.55, [1.4, 0.8, 1]), rockGeometry(23, d, 0.38, [1, 1.3, 0.9])];
+  mat = mat || rockMaterial({ color: 0x4a4f5c });
   const group = new THREE.Group();
   const data = [];
   const dummy = new THREE.Object3D();
@@ -36,14 +41,14 @@ export function createAsteroids(tier, yRange = [-60, 700]) {
     const inst = new THREE.InstancedMesh(g, mat, count);
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
-      const r = 45 + Math.pow(Math.random(), 0.7) * 260;
+      const r = 60 + Math.pow(Math.random(), 0.7) * 280;
       const d = {
         inst, i,
         p: new THREE.Vector3(Math.cos(a) * r, THREE.MathUtils.lerp(yRange[0], yRange[1], Math.random()), Math.sin(a) * r - 80),
-        s: Math.pow(Math.random(), 3) * 7 + 0.4,
+        s: Math.pow(Math.random(), 3) * 6 + 0.35,
         r: new THREE.Euler(Math.random() * 6, Math.random() * 6, Math.random() * 6),
         w: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.3),
-        drift: new THREE.Vector3((Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.2, (Math.random() - 0.5) * 0.6),
+        drift: new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.12, (Math.random() - 0.5) * 0.4),
       };
       data.push(d);
     }
@@ -111,7 +116,7 @@ export function createShootingStars(count = 14) {
 
 // Drifting glowing dust motes around the camera
 export function createMotes(tier, texture) {
-  const N = tier.mobile ? 500 : 1400;
+  const N = tier.mobile ? 300 : 800;
   const pos = new Float32Array(N * 3), seed = new Float32Array(N);
   for (let i = 0; i < N; i++) { pos.set([(Math.random() - 0.5) * 120, (Math.random() - 0.5) * 70, (Math.random() - 0.5) * 120], i * 3); seed[i] = Math.random(); }
   const g = new THREE.BufferGeometry();
@@ -121,12 +126,12 @@ export function createMotes(tier, texture) {
   const m = new THREE.ShaderMaterial({
     uniforms: u, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: `uniform float uTime,uPR; uniform vec3 uCam; attribute float aSeed; varying float vA; varying float vS;
-      void main(){ vec3 p = position + vec3(sin(uTime*0.2+aSeed*30.0)*2.0, uTime*(0.4+aSeed*0.6), cos(uTime*0.17+aSeed*20.0)*2.0);
+      void main(){ vec3 p = position + vec3(sin(uTime*0.1+aSeed*30.0)*2.0, uTime*(0.1+aSeed*0.15), cos(uTime*0.08+aSeed*20.0)*2.0);
         vec3 box = vec3(120.0,70.0,120.0); p = uCam + mod(p - uCam + box*0.5, box) - box*0.5;
         vec4 mv = viewMatrix*vec4(p,1.0); float d=-mv.z; vA = smoothstep(1.0,6.0,d)*smoothstep(60.0,20.0,d); vS=aSeed;
         gl_PointSize = uPR*(1.5+aSeed*3.5)*(28.0/max(d,1.0)); gl_Position=projectionMatrix*mv; }`,
     fragmentShader: `varying float vA; varying float vS; void main(){ float d=length(gl_PointCoord-0.5); float a=smoothstep(0.5,0.0,d);
-      vec3 c = mix(vec3(0.35,1.0,0.75), vec3(0.6,0.75,1.0), vS); if(vS>0.88) c=vec3(1.0,0.75,0.45); gl_FragColor=vec4(c*a*a*vA*0.9,1.0);} `,
+      vec3 c = mix(vec3(0.75,0.85,1.0), vec3(1.0,0.92,0.8), vS); gl_FragColor=vec4(c*a*a*vA*0.35,1.0);} `,
   });
   const pts = new THREE.Points(g, m);
   pts.frustumCulled = false;
