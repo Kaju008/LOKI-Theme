@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kaju Soni — Master of Timeline</title>
+  <meta name="description" content="Kaju Soni — video editor, motion designer and AI filmmaker from Bengaluru. Step into the multiverse of timelines.">
+  <meta name="theme-color" content="#020308">
+  <meta property="og:title" content="Kaju Soni — Master of Timeline">
+  <meta property="og:description" content="Video editor · Motion designer · AI filmmaker. 8+ years bending timelines.">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/unbounded-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/manrope-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body class="is-intro">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ============ INTRO GATE ============ -->
+  <div class="gate" id="gate" role="dialog" aria-label="Intro">
+    <div class="gate-inner">
+      <p class="gate-kicker"><span class="dot"></span>Kaju Soni · Portfolio</p>
+      <h1 class="gate-line" id="gate-line" aria-label="Creativity begins with a thought">
+        <span class="w">Creativity</span> <span class="w">begins</span> <span class="w">with</span> <span class="w">a</span> <em class="w">thought.</em>
+      </h1>
+      <div class="slider" id="slider" role="slider" aria-label="Slide to begin" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+        <div class="slider-liquid"><i></i><i></i><i></i></div>
+        <div class="slider-glow"></div>
+        <span class="slider-label" id="slider-label">Slide to begin creating</span>
+        <div class="slider-knob" id="slider-knob"><span class="knob-core"></span></div>
+      </div>
+      <p class="gate-state" id="gate-state"><span class="mode" id="mode-a">Before</span><span class="bar"><i id="load-bar"></i></span><span class="mode" id="mode-b">After</span></p>
+    </div>
+    <p class="gate-hint" id="gate-hint">Move your cursor through the particles</p>
+    <button class="skip" id="skip" type="button">Skip intro</button>
+  </div>
+  <div class="intro-caption" id="intro-caption" aria-hidden="true"><span>…and from one thought,</span><b>a universe of timelines.</b></div>
+  <div class="flash" id="flash"></div>
+
+  <!-- ============ HUD ============ -->
+  <header class="hud" id="hud">
+    <a class="brand" href="#hero" data-go="hero" aria-label="Kaju Soni — home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 4h16l-6 10 6 10H8l6-10z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 14v10" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="14" r="2.2" fill="currentColor"/></svg>
+      <span>Kaju Soni</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#about" data-go="about">About</a>
+      <a href="#work" data-go="work">Portfolio</a>
+      <a href="#skills" data-go="skills">Skills</a>
+      <a href="#contact" data-go="contact">Contact</a>
+    </nav>
+    <div class="hud-right">
+      <a class="xbtn" href="games.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9v6M4 12h6M15 11h.01M18 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="2" y="6" width="20" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Games</span></a>
+      <a class="xbtn" href="lab.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 18.5A1.6 1.6 0 0 0 5.9 21h12.2a1.6 1.6 0 0 0 1.4-2.5L14 9V3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 15h10" stroke="currentColor" stroke-width="1.5"/></svg><span>AI Lab</span></a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><i></i><i></i></button>
+    </div>
+  </header>
+  <div class="menu" id="menu" hidden>
+    <a href="#about" data-go="about"><small>02</small>About</a>
+    <a href="#work" data-go="work"><small>03</small>Portfolio</a>
+    <a href="#skills" data-go="skills"><small>04</small>Skills</a>
+    <a href="#contact" data-go="contact"><small>05</small>Contact</a>
+    <div class="menu-x"><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="lab.html">AI Lab</a></div>
+  </div>
+
+  <nav class="rail" id="rail" aria-label="Progress">
+    <div class="rail-line"><i id="rail-fill"></i></div>
+    <a data-go="hero" class="on"><b>01</b><span>Hero</span></a>
+    <a data-go="about"><b>02</b><span>About</span></a>
+    <a data-go="work"><b>03</b><span>Portfolio</span></a>
+    <a data-go="skills"><b>04</b><span>Skills</span></a>
+    <a data-go="contact"><b>05</b><span>Contact</span></a>
+  </nav>
+
+  <!-- ============ STORY ============ -->
+  <main id="story">
+    <section id="hero" class="sec" aria-label="Master of Timeline">
+      <div class="stage">
+        <div class="hero-title" id="hero-title">
+          <p class="eyebrow"><span class="dot"></span>The multiverse of edits</p>
+          <h2 class="mot" aria-label="Master of Timeline">
+            <span class="mot-a" data-text="MASTER">MASTER</span>
+            <span class="mot-of">of</span>
+            <span class="mot-b" data-text="TIMELINE">TIMELINE</span>
+          </h2>
+          <p class="hero-sub">Kaju Soni <i></i> Video Editor · Motion Designer · AI Filmmaker</p>
+        </div>
+        <div class="hero-quote" id="hero-quote"><span>Every frame. Every cut.</span><b>Every universe.</b></div>
+        <div class="scroll-cue" id="scroll-cue"><span class="mouse"><i></i></span>Scroll to enter the timeline</div>
+        <div class="hero-hint" id="hero-hint">Hover the floating islands</div>
+      </div>
+    </section>
+
+    <section id="about" class="sec" aria-label="About">
+      <div class="stage">
+        <div class="scroll" id="scroll">
+          <div class="roller roller-l"><i class="cap"></i><i class="cap b"></i></div>
+          <div class="parchment" id="parchment">
+            <div class="parch-inner">
+              <div class="parch-copy">
+                <p class="kicker" id="about-kicker"></p>
+                <h2 class="h-cinzel" id="about-title"></h2>
+                <div class="rule"><i></i></div>
+                <div id="about-body"></div>
+                <dl class="stats" id="about-stats"></dl>
+                <div class="parch-cta">
+                  <a class="btn ghost" id="resume-btn" target="_blank" rel="noopener">Download résumé <span>↗</span></a>
+                  <a class="btn ghost" href="#work" data-go="work">See the work <span>→</span></a>
+                </div>
+              </div>
+              <figure class="parch-photo">
+                <img src="assets/img/me-think.webp" srcset="assets/img/me-think-sm.webp 600w, assets/img/me-think.webp 860w" sizes="(max-width: 800px) 60vw, 26vw" alt="Kaju Soni, hand on chin, thinking" loading="lazy">
+                <figcaption>Bengaluru · 8+ years</figcaption>
+              </figure>
+            </div>
+            <div class="runes" aria-hidden="true"></div>
+          </div>
+          <div class="roller roller-r"><i class="cap"></i><i class="cap b"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="work" class="sec" aria-label="Portfolio">
+      <div class="stage">
+        <header class="sec-head">
+          <p class="eyebrow"><span class="dot"></span>03 · Portfolio</p>
+          <h2 class="h-cinzel">Portfolio</h2>
+          <p class="sec-sub">Each orb is a timeline. Tap one to play it.</p>
+        </header>
+        <div class="orbit-wrap">
+          <div class="orbit-track" id="orbit-track">
+            <svg class="orbit-lines" id="orbit-lines" aria-hidden="true"></svg>
+          </div>
+        </div>
+        <div class="work-progress"><span id="work-count">01</span><i><b id="work-bar"></b></i><span id="work-total">19</span></div>
+      </div>
+    </section>
+
+    <section id="skills" class="sec" aria-label="Skills and tools">
+      <div class="stage">
+        <header class="sec-head center">
+          <p class="eyebrow"><span class="dot"></span>04 · Arsenal</p>
+          <h2 class="h-cinzel">Skills &amp; Tools</h2>
+        </header>
+        <div class="skills" id="skills-grid">
+          <div class="sk-group"><p class="sk-label">Craft</p><div class="sk-row" id="sk-craft"></div></div>
+          <div class="sk-group"><p class="sk-label">AI</p><div class="sk-row" id="sk-ai"></div></div>
+        </div>
+        <p class="sk-foot">Editing · Motion design · Colour · Sound · Story · GenAI pipelines</p>
+      </div>
+    </section>
+
+    <section id="contact" class="sec" aria-label="Contact">
+      <div class="stage">
+        <div class="contact">
+          <div class="portal-copy">
+            <p class="eyebrow"><span class="dot"></span>05 · Contact</p>
+            <h2 class="h-cinzel big">Let's<br>create<br>together</h2>
+            <p class="portal-sub">Collaborations, projects, or just to say hi — the portal is open.</p>
+          </div>
+          <form class="form glass" id="form" novalidate>
+            <label><span>Your name</span><input name="name" autocomplete="name" required></label>
+            <label><span>Your email</span><input name="email" type="email" autocomplete="email" required></label>
+            <label><span>Phone <em>(optional)</em></span><input name="phone" type="tel" autocomplete="tel"></label>
+            <label><span>Your message</span><textarea name="message" rows="4" required></textarea></label>
+            <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <button class="btn solid" type="submit"><span>Send message</span><b>→</b></button>
+            <p class="form-msg" id="form-msg" role="status"></p>
+            <div class="connect">
+              <span class="or">or connect here</span>
+              <a class="ic" id="c-linkedin" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM10 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05C21.2 8.65 22 11 22 14v7h-4v-6.2c0-1.48-.03-3.38-2.06-3.38-2.06 0-2.38 1.6-2.38 3.27V21H10z" fill="currentColor"/></svg></a>
+              <button class="ic" type="button" id="c-phone" aria-label="Copy phone number"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="currentColor"/></svg></button>
+              <button class="ic" type="button" id="c-email" aria-label="Copy email address"><svg viewBox="0 0 24 24"><path d="M3 5h18v14H3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m3 6 9 7 9-7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+              <a class="ic" id="c-resume" target="_blank" rel="noopener" aria-label="Résumé"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M14 2v6h6M9 13h8M9 17h6" stroke="currentColor" stroke-width="1.6"/></svg></a>
+            </div>
+          </form>
+        </div>
+        <footer class="foot">
+          <span>© <span id="year"></span> Kaju Soni · Bengaluru</span>
+          <span class="foot-x"><a class="xbtn sm" href="games.html">Games</a><a class="xbtn sm" href="lab.html">AI Lab</a><button class="link" id="replay" type="button">Replay intro ↺</button></span>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ PLAYER ============ -->
+  <div class="player" id="player" hidden>
+    <div class="player-scrim" data-close></div>
+    <div class="player-burst" id="player-burst"></div>
+    <div class="player-card">
+      <div class="player-frame" id="player-frame"></div>
+      <div class="player-bar">
+        <button class="pbtn" id="p-prev" aria-label="Previous">←</button>
+        <div class="player-meta"><b id="p-title"></b><span id="p-cat"></span></div>
+        <a class="pbtn wide" id="p-ext" target="_blank" rel="noopener">Open ↗</a>
+        <button class="pbtn" id="p-next" aria-label="Next">→</button>
+        <button class="pbtn" data-close aria-label="Close">✕</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <noscript><p class="noscript">This experience needs JavaScript and WebGL. Reach me at kajusoni008@gmail.com.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

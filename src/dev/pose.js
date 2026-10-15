@@ -1,0 +1,18 @@
+import * as THREE from 'three';
+import { createThrone } from '../world/throne.js';
+import { createFigure, POSES } from '../world/figure.js';
+window.POSES = POSES;
+const r = new THREE.WebGLRenderer({ antialias: true }); r.setSize(innerWidth, innerHeight); document.body.appendChild(r.domElement);
+r.toneMapping = THREE.ACESFilmicToneMapping;
+const s = new THREE.Scene(); s.background = new THREE.Color(0x30343c);
+s.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2)); const d = new THREE.DirectionalLight(0xffffff, 2); d.position.set(3, 5, 6); s.add(d);
+const cam = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.1, 100);
+const params = new URLSearchParams(location.search);
+const pose = params.get('pose') || 'seated';
+const throne = createThrone(null); if (pose === 'seated' && !params.get('nothrone')) s.add(throne.group);
+const f = await createFigure({ pose, env: null, cape: true });
+if (pose === 'seated') f.seatOn(throne.seatY);
+s.add(f.group);
+window.setView = (az, el = 8, rad = 6, ty = 1.6) => { const a = az * Math.PI / 180, e = el * Math.PI / 180; cam.position.set(Math.sin(a) * Math.cos(e) * rad, ty + Math.sin(e) * rad, Math.cos(a) * Math.cos(e) * rad); cam.lookAt(0, ty, 0); r.render(s, cam); };
+window.fig = f; window.THREE = THREE;
+setView(0); window.ready = true;
