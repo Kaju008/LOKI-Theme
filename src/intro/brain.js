@@ -158,7 +158,7 @@ export function createIntro(tier) {
         vec3 d = wp.xyz - uMouse; float m = smoothstep(0.75, 0.0, length(d)) * uMouseF * (1.0-uBurst);
         wp.xyz += normalize(d+1e-4) * m * 0.42;
         vec4 mv = viewMatrix * wp;
-        float sz = uSize * uPR * (0.45 + aRand.z*0.95) * (10.0 / max(0.15,-mv.z));
+        float sz = uSize * uPR * (0.35 + aRand.z*0.8) * (10.0 / max(0.15,-mv.z));
         gl_PointSize = min(sz * (1.0 + bb*0.6), 48.0);
         gl_Position = projectionMatrix * mv;
         // colour: neon green -> cyan, pulses travelling across the cortex
@@ -166,11 +166,11 @@ export function createIntro(tier) {
         vec3 col = mix(g, c, smoothstep(0.2,0.9,aRand.w));
         if (aRand.y > 0.965) col = mix(v, a, step(0.985, aRand.y));
         float wave = smoothstep(0.86, 1.0, sin(dot(position, normalize(vec3(0.3,0.9,0.4)))*7.0 - uTime*2.4 + aRand.x*0.6));
-        float lit = (0.28 + 0.95*aFold) * t + 0.4*(1.0-t);
-        col = col*lit + vec3(0.75,1.0,0.95)*wave*t*0.9 + vec3(m*1.5);
+        float lit = (0.04 + 0.62*aFold*aFold) * t + 0.4*(1.0-t);
+        col = col*lit + vec3(0.6,1.0,0.9)*wave*t*0.45*aFold + vec3(m*1.2);
         col = mix(col, mix(col, vec3(0.6,0.7,1.0), 0.4), bb);
         vCol = col;
-        vA = mix(0.55*uDust, 1.0, t) * (1.0 - smoothstep(0.75,1.0,uBurst)*0.6) * smoothstep(0.08, 0.6, -mv.z);
+        vA = mix(0.55*uDust, 0.62, t) * (1.0 - smoothstep(0.75,1.0,uBurst)*0.6) * smoothstep(0.08, 0.6, -mv.z);
       }`,
     fragmentShader: /* glsl */ `
       varying vec3 vCol; varying float vA;

@@ -140,23 +140,38 @@ export async function createFigure({ pose = 'seated', env, cape = true, height =
 }
 
 // Photoreal render on a camera-facing card (used when HERO images are set)
-export function createHeroCard(url, height, loader) {
+export function createHeroCard(def, loader, tier) {
+  const url = (tier && tier.mobile && def.srcSm) ? def.srcSm : def.src;
   const tex = loader.load(url);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.02, depthWrite: true, toneMapped: true });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+  const u = { map: { value: tex }, uTime: { value: 0 }, uRim: { value: new THREE.Color(0.25, 1.0, 0.75) } };
+  const mat = new THREE.ShaderMaterial({
+    uniforms: u, transparent: true, depthWrite: true,
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
+    fragmentShader: `uniform sampler2D map; uniform float uTime; uniform vec3 uRim; varying vec2 vUv;
+      void main(){ vec4 c = texture2D(map, vUv); if (c.a < 0.03) discard;
+        // soft edge glow: sample alpha around to find the silhouette edge
+        float e = 0.0; vec2 px = vec2(1.0/1024.0, 1.0/1536.0)*3.0;
+        e += texture2D(map, vUv+vec2(px.x,0.0)).a + texture2D(map, vUv-vec2(px.x,0.0)).a + texture2D(map, vUv+vec2(0.0,px.y)).a + texture2D(map, vUv-vec2(0.0,px.y)).a;
+        float edge = clamp(1.0 - e*0.25, 0.0, 1.0) * c.a;
+        vec3 col = c.rgb * 1.05;                                  // texture is decoded to linear by WebGL
+        col += uRim * edge * (0.6 + 0.2*sin(uTime*1.3));
+        gl_FragColor = vec4(col, c.a); }`,
+  });
+  const H = def.height, W = H * def.aspect;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat);
+  mesh.position.y = H / 2;
   const group = new THREE.Group();
   group.add(mesh);
-  tex.onUpdate = null;
-  const img = new Image();
-  img.onload = () => { const a = img.width / img.height; mesh.scale.set(height * a, height, 1); mesh.position.y = height / 2; };
-  img.src = url;
+  const head = new THREE.Vector3((def.head[0] - 0.5) * W, (1 - def.head[1]) * H, 0.05);
+  const p = new THREE.Vector3();
   return {
-    group,
-    update(t, cam) { // cylindrical billboard
-      const p = new THREE.Vector3(); group.getWorldPosition(p);
-      group.rotation.y = Math.atan2(cam.position.x - p.x, cam.position.z - p.z) * 0.85;
+    group, head, isCard: true,
+    update(t, cam) {
+      u.uTime.value = t;
+      group.getWorldPosition(p);
+      group.rotation.y = Math.atan2(cam.position.x - p.x, cam.position.z - p.z) * 0.8;
     },
   };
 }

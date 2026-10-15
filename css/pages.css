@@ -1,0 +1,27 @@
+/* Extra pages: Games + AI Lab */
+body.page { overflow-x: hidden; min-height: 100svh; }
+#stars { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; }
+.page-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(60% 50% at 20% 10%, rgba(61,255,181,.10), transparent 60%), radial-gradient(50% 50% at 85% 20%, rgba(157,128,255,.14), transparent 60%), radial-gradient(70% 60% at 50% 110%, rgba(90,223,255,.12), transparent 60%); }
+body.page .hud { opacity: 1; transform: none; pointer-events: auto; }
+.page-main { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; padding: calc(120px + env(safe-area-inset-top)) var(--gut) 80px; }
+.page-head { display: grid; gap: 16px; margin-bottom: clamp(40px, 7vh, 80px); }
+.page-head .h-cinzel { font-size: clamp(38px, 7vw, 96px); }
+.page-head p.lead { margin: 0; max-width: 52ch; color: var(--ink-2); font-size: clamp(15px, 1.4vw, 18px); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+.card { position: relative; padding: 26px; min-height: 260px; display: grid; align-content: space-between; gap: 22px; overflow: hidden; transition: transform .5s var(--ease-o), box-shadow .5s; }
+.card:hover { transform: translateY(-4px); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 40px 120px rgba(0,0,0,.6), 0 0 60px rgba(61,255,181,.12); }
+.card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.06) 50%, transparent 65%); background-size: 300% 100%; animation: shine 6s infinite; pointer-events: none; }
+.card .tag { justify-self: start; font: 500 9.5px/1 var(--f-display); letter-spacing: .26em; text-transform: uppercase; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--em); }
+.card h3 { margin: 0; font: 600 clamp(20px, 2vw, 26px)/1.2 var(--f-display); letter-spacing: -.01em; }
+.card p { margin: 8px 0 0; color: var(--ink-2); font-size: 14.5px; }
+.card .glyph { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; font: 700 18px var(--f-display); color: var(--c, var(--em));
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.18), rgba(255,255,255,.02) 50%), #070b15; border: 1px solid rgba(255,255,255,.16); box-shadow: 0 0 30px color-mix(in srgb, var(--c, #3dffb5) 30%, transparent); }
+.card .soon { display: flex; align-items: center; gap: 12px; font: 500 10px/1 var(--f-display); letter-spacing: .24em; text-transform: uppercase; color: var(--ink-3); }
+.card .soon i { flex: 1; height: 2px; border-radius: 2px; background: var(--line); position: relative; overflow: hidden; }
+.card .soon i::after { content: ''; position: absolute; inset: 0; width: 40%; background: var(--spectrum); animation: load 2.4s ease-in-out infinite; }
+@keyframes load { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
+.back { display: inline-flex; align-items: center; gap: 10px; margin-top: 50px; font: 500 11px/1 var(--f-display); letter-spacing: .24em; text-transform: uppercase; color: var(--ink-2); }
+.back:hover { color: var(--ink); }
+.page-foot { position: relative; z-index: 2; text-align: center; padding: 30px var(--gut) 40px; color: var(--ink-3); font-size: 12px; }
+@media (max-width: 1000px) { body.page .hud-right .xbtn { display: none; } }

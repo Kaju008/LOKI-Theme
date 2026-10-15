@@ -66,7 +66,8 @@ setV(0);
 slider.classList.add('ready');
 const posToV = (cx) => { const r = slider.getBoundingClientRect(); return (cx - r.left - 38) / (r.width - 76); };
 slider.addEventListener('pointerdown', (e) => { if (started) return; dragging = true; slider.setPointerCapture(e.pointerId); slider.style.cursor = 'grabbing'; setV(posToV(e.clientX)); });
-slider.addEventListener('pointermove', (e) => { if (dragging) setV(posToV(e.clientX)); });
+slider.addEventListener('pointermove', (e) => { if (dragging) { setV(posToV(e.clientX)); if (v >= 0.985) { dragging = false; begin(); } } });
+addEventListener('pointerup', () => release());
 const release = () => {
   if (!dragging) return; dragging = false; slider.style.cursor = '';
   if (v > 0.8) { gsap.to({ x: v }, { x: 1, duration: 0.25, onUpdate() { setV(this.targets()[0].x); }, onComplete: begin }); }
@@ -116,8 +117,8 @@ function toWorld(fast) {
   document.body.classList.add('live');
   scrollTo(0, 0);
   intro.dispose();
-  final.uniforms.uCA.value = 0.0015; bloom.strength = 0.7; bloom.threshold = 0.85;
-  rig = createRig(world.camera, REG, world.headPos);
+  final.uniforms.uCA.value = 0.0015; bloom.strength = 0.9; bloom.threshold = 1.25;
+  rig = createRig(world.camera, REG, world.headPos, { card: !!world.heroCard });
   lenis = new Lenis({ duration: 1.35, smoothWheel: true, wheelMultiplier: 0.9, touchMultiplier: 1.4 });
   measure();
   flight.k = 0;
@@ -211,4 +212,4 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // debug hooks (used by automated checks)
-window.__kaju = { THREE, core, flight, finishFlight() { gsap.killTweensOf(flight); flight.k = 1; }, get lenis() { return lenis; }, measure, begin, goTo, get world() { return world; }, get mode() { return mode; }, intro, tier };
+window.__kaju = { THREE, core, flight, finishFlight() { gsap.killTweensOf(flight); flight.k = 1; gsap.killTweensOf('#flash'); $('#flash').style.opacity = 0; }, get lenis() { return lenis; }, measure, begin, goTo, get world() { return world; }, get mode() { return mode; }, intro, tier };

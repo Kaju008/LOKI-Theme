@@ -11,15 +11,16 @@ export const SITE = {
   linkedin: 'https://www.linkedin.com/in/kaju-soni-76522a16b',
   resume: 'assets/Kaju_Soni_Resume.pdf',
   // Google Apps Script web-app URL that stores contact messages in the Google Sheet.
-  formEndpoint: '',
+  formEndpoint: 'https://script.google.com/macros/s/AKfycbxfFjErXd-URcazSslxg3s1Vcy8P_EztcNLfq2LKPe7okYPWg0NlBFP4PdntHtRWu3z/exec',
 };
 
 // Hero renders. Leave null to use the built-in 3D figure.
-// Drop a transparent PNG/WebP into assets/hero/ and put its path here.
+// Each is a transparent PNG/WebP render in assets/hero/ (generated with ChatGPT from Kaju's character sheet).
+// head = where the face sits in the image (x, y from top-left, 0–1) — used for the camera close-up.
 export const HERO = {
-  throne: null,   // e.g. 'assets/hero/throne.webp'  (seated on the throne, front)
-  back: null,     // e.g. 'assets/hero/back.webp'    (standing, seen from behind, cape)
-  stand: null,    // e.g. 'assets/hero/stand.webp'   (standing, facing the portal)
+  throne: { src: 'assets/hero/throne.webp', srcSm: 'assets/hero/throne-sm.webp', aspect: 1024 / 1536, height: 3.0, head: [0.475, 0.215] },
+  back: { src: 'assets/hero/back.webp', srcSm: 'assets/hero/back-sm.webp', aspect: 1024 / 1536, height: 2.25, head: [0.54, 0.06] },
+  stand: { src: 'assets/hero/back.webp', srcSm: 'assets/hero/back-sm.webp', aspect: 1024 / 1536, height: 2.25, head: [0.54, 0.06] },
 };
 
 // Portfolio. p: 'ig' (Instagram reel) or 'yt' (YouTube). id = the code in the link.

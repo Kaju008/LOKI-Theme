@@ -62,7 +62,7 @@ export function createRenderer(canvas, tier) {
   composer.setPixelRatio(tier.dpr);
   const renderPass = new RenderPass(new THREE.Scene(), new THREE.PerspectiveCamera());
   composer.addPass(renderPass);
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth * tier.bloomScale, innerHeight * tier.bloomScale), 0.7, 0.28, 0.85);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth * tier.bloomScale, innerHeight * tier.bloomScale), 0.9, 0.3, 1.25);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const final = new ShaderPass(FinalShader);

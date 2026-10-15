@@ -12,7 +12,7 @@ export function createBridge({ width = 16, length = 1400, front = 160, y = 0, pl
   // obsidian glass slab
   const slab = new THREE.Mesh(
     new THREE.BoxGeometry(width + 0.6, 0.5, length),
-    new THREE.MeshPhysicalMaterial({ color: 0x030408, metalness: 0.6, roughness: 0.32, clearcoat: 0.5, clearcoatRoughness: 0.18, envMap: env, envMapIntensity: 0.45 })
+    new THREE.MeshPhysicalMaterial({ color: 0x030408, metalness: 0.35, roughness: 0.6, clearcoat: 0.25, clearcoatRoughness: 0.4, envMap: env, envMapIntensity: 0.35 })
   );
   slab.position.set(0, y - 0.26, zc);
   group.add(slab);
@@ -64,7 +64,7 @@ export function createBridge({ width = 16, length = 1400, front = 160, y = 0, pl
         vec3 col = under + lc*(clip*0.8 + sk*1.8 + sep*0.6) + vec3(0.6,1.0,0.95)*rail*1.1 + lc*railInner*0.18;
         // playhead across the bridge at the throne
         float pd = abs(z - uPlayhead);
-        float ph = smoothstep(0.3, 0.0, pd)*1.4 + exp(-pd*0.6)*0.12;
+        float ph = smoothstep(0.25, 0.0, pd)*1.1 + exp(-pd*0.8)*0.06;
         col += vec3(0.75,1.0,0.9) * ph * (0.85+0.15*sin(uTime*3.0));
         // fade far/near
         float fade = smoothstep(uFront, uFront-30.0, z) * smoothstep(uFront-uLen, uFront-uLen+380.0, z);

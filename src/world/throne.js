@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 // Obsidian throne with gold trim, horned crest and glowing inlay, on an octagonal dais.
-export function createThrone(env) {
+export function createThrone(env, { chairless = false } = {}) {
   const g = new THREE.Group();
-  const obsidian = new THREE.MeshPhysicalMaterial({ color: 0x06080c, metalness: 0.45, roughness: 0.38, clearcoat: 0.6, clearcoatRoughness: 0.25, envMap: env, envMapIntensity: 0.55 });
+  const obsidian = new THREE.MeshPhysicalMaterial({ color: 0x05070b, metalness: 0.3, roughness: 0.55, clearcoat: 0.25, clearcoatRoughness: 0.45, envMap: env, envMapIntensity: 0.4 });
   const gold = new THREE.MeshPhysicalMaterial({ color: 0xc9a14a, metalness: 1, roughness: 0.28, envMap: env, envMapIntensity: 1.6, emissive: 0x2a1a05, emissiveIntensity: 0.4 });
   const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 2.0, 1.2) });
   const glowGold = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 1.5, 0.5) });
@@ -24,8 +24,9 @@ export function createThrone(env) {
   const daisTop = y; // ≈0.94
   g.userData.daisTop = daisTop;
 
-  // Seat
   const seatY = daisTop + 0.48;
+  if (!chairless) {
+  // Seat
   const seat = new THREE.Mesh(new RoundedBoxGeometry(1.16, 0.5, 1.1, 4, 0.06), obsidian);
   seat.position.set(0, daisTop + 0.25, 0.05);
   g.add(seat);
@@ -111,14 +112,16 @@ export function createThrone(env) {
     g.add(tip);
   }
 
+  }
   // halo ring behind the throne
   const halo = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.025, 8, 160), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.6, 1.8, 1.4), transparent: true, opacity: 0.85 }));
-  halo.position.set(0, seatY + 2.4, -1.1);
+  halo.position.set(0, chairless ? daisTop + 2.25 : seatY + 2.4, chairless ? -0.9 : -1.1);
+  if (chairless) { halo.scale.setScalar(0.92); }
   g.add(halo);
   const halo2 = new THREE.Mesh(new THREE.TorusGeometry(2.75, 0.01, 6, 160), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.2, 0.5) }));
-  halo2.position.copy(halo.position);
+  halo2.position.copy(halo.position); if (chairless) halo2.scale.setScalar(0.92);
   g.add(halo2);
 
   g.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
-  return { group: g, seatY, daisTop, halo, halo2, update(t) { halo.rotation.z = t * 0.1; halo2.rotation.z = -t * 0.06; halo2.scale.setScalar(1 + Math.sin(t * 0.8) * 0.01); } };
+  return { group: g, seatY, daisTop, halo, halo2, update(t) { halo.rotation.z = t * 0.1; halo2.rotation.z = -t * 0.06; halo2.scale.setScalar((chairless ? 0.92 : 1) * (1 + Math.sin(t * 0.8) * 0.01)); } };
 }

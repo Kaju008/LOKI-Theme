@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Games — Kaju Soni</title>
+  <meta name="description" content="Small games and playable experiments by Kaju Soni — coming soon.">
+  <meta name="theme-color" content="#020308">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body class="page">
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="page-bg" aria-hidden="true"></div>
+  <header class="hud">
+    <a class="brand" href="./" aria-label="Kaju Soni — home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 4h16l-6 10 6 10H8l6-10z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 14v10" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="14" r="2.2" fill="currentColor"/></svg>
+      <span>Kaju Soni</span>
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="./#about">About</a><a href="./#work">Portfolio</a><a href="./#skills">Skills</a><a href="./#contact">Contact</a>
+    </nav>
+    <div class="hud-right">
+      <a class="xbtn" href="games.html"><span>Games</span></a>
+      <a class="xbtn" href="lab.html"><span>AI Lab</span></a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><i></i><i></i></button>
+    </div>
+  </header>
+  <div class="menu" id="menu" hidden>
+    <a href="./"><small>01</small>Home</a><a href="./#work"><small>03</small>Portfolio</a><a href="./#contact"><small>05</small>Contact</a>
+    <div class="menu-x"><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="lab.html">AI Lab</a></div>
+  </div>
+  <main class="page-main">
+    <header class="page-head">
+      <p class="eyebrow"><span class="dot"></span>The Arcade</p>
+      <h1 class="h-cinzel">Games</h1>
+      <p class="lead">Little playable worlds I'm building between edits. The first ones land here soon.</p>
+    </header>
+    <section class="cards" aria-label="Upcoming games">
+      <article class="card glass" style="--c:#3dffb5">
+        <div><span class="tag">Game 01</span></div>
+        <div><div class="glyph">01</div></div>
+        <div><h3>Coming soon</h3><p>A small game is being forged in the timeline. Check back soon.</p></div>
+        <div class="soon">In development<i></i></div>
+      </article>
+      <article class="card glass" style="--c:#9d80ff">
+        <div><span class="tag">Game 02</span></div>
+        <div><div class="glyph">02</div></div>
+        <div><h3>Coming soon</h3><p>Another experiment is loading.</p></div>
+        <div class="soon">In development<i></i></div>
+      </article>
+      <article class="card glass" style="--c:#5adfff">
+        <div><span class="tag">Game 03</span></div>
+        <div><div class="glyph">03</div></div>
+        <div><h3>Coming soon</h3><p>Stay tuned.</p></div>
+        <div class="soon">In development<i></i></div>
+      </article>
+    </section>
+    <a class="back" href="./">← Back to the timeline</a>
+  </main>
+  <footer class="page-foot">© 2026 Kaju Soni · Bengaluru</footer>
+  <script type="module" src="js/pages.js"></script>
+</body>
+</html>

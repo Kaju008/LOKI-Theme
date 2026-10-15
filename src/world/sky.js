@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { NOISE } from '../core/glsl.js';
-import { Lensflare, LensflareElement } from 'three/examples/jsm/objects/Lensflare.js';
 
 export const SUN_DIR = new THREE.Vector3(-0.55, 0.32, -1).normalize();
 
@@ -35,7 +34,7 @@ export function bakeNebula(renderer, tier) {
         col += mix(vec3(0.20,0.24,0.36), vec3(0.45,0.36,0.30), smoothstep(0.3,0.9,n2)) * band * (0.25+0.75*lanes) * smoothstep(-0.2,0.6,n1+0.3) * 0.9;
         // sun glow
         float s = max(dot(d, uSun), 0.0);
-        col += amber * pow(s, 18.0) * 1.4 + vec3(1.0,0.85,0.7) * pow(s, 400.0) * 3.0 + vec3(0.25,0.3,0.5)*pow(s,4.0)*0.25;
+        col += amber * pow(s, 24.0) * 1.0 + vec3(1.0,0.85,0.7) * pow(s, 400.0) * 3.0 + vec3(0.25,0.3,0.5)*pow(s,6.0)*0.1;
         col *= 0.62;
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -174,19 +173,6 @@ export function createFar(tier, loader) {
   const ice = new THREE.Mesh(new THREE.SphereGeometry(22, 48, 32), new THREE.MeshStandardMaterial({ color: 0x3fa7c9, roughness: 0.55, metalness: 0.1, emissive: 0x06202a }));
   ice.position.set(230, 300, -1150);
   far.add(ice);
-
-  // Lens flare on the distant sun
-  const fl = new Lensflare();
-  const t0 = loader.load('assets/textures/lensflare0.png'), t3 = loader.load('assets/textures/lensflare3.png');
-  fl.addElement(new LensflareElement(t0, tier.mobile ? 380 : 620, 0, new THREE.Color(1, 0.86, 0.7)));
-  fl.addElement(new LensflareElement(t3, 60, 0.6, new THREE.Color(0.5, 0.8, 1)));
-  fl.addElement(new LensflareElement(t3, 80, 0.7, new THREE.Color(0.4, 1, 0.7)));
-  fl.addElement(new LensflareElement(t3, 120, 0.9, new THREE.Color(0.7, 0.5, 1)));
-  fl.addElement(new LensflareElement(t3, 70, 1.0));
-  const sun = new THREE.PointLight(0xffffff, 0, 1);
-  sun.add(fl);
-  sun.position.copy(SUN_DIR).multiplyScalar(1400);
-  far.add(sun);
 
   return { group: far, update: (t) => { giant.u.uTime.value = t; moon.rotation.y = t * 0.01; giant.group.children[0].rotation.y = t * 0.006; } };
 }

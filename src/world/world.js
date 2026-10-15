@@ -24,7 +24,7 @@ export async function createWorld(renderer, tier) {
 
   // lights
   scene.add(new THREE.HemisphereLight(0x5a76b8, 0x0a0d14, 0.35));
-  const key = new THREE.DirectionalLight(0xffd7a8, 1.6);
+  const key = new THREE.DirectionalLight(0xffd7a8, 1.2);
   key.position.copy(SUN_DIR).multiplyScalar(100);
   scene.add(key);
   const rim = new THREE.DirectionalLight(0x5ffff0, 2.0);
@@ -58,15 +58,15 @@ export async function createWorld(renderer, tier) {
   // =================== HERO — the throne on the timeline ===================
   const hero = new THREE.Group();
   scene.add(hero);
-  const throne = createThrone(env);
+  const throne = createThrone(env, { chairless: !!HERO.throne });
   hero.add(throne.group);
   updaters.push((t) => throne.update(t));
   const bridge = createBridge({ width: 16, length: 1500, front: 170, y: 0, playhead: 0, env });
   hero.add(bridge.group);
-  const strands = createStrands({ origin: new THREE.Vector3(0, throne.seatY + 2.2, -1.4), count: tier.mobile ? 16 : 30 });
+  const strands = createStrands({ origin: new THREE.Vector3(0, throne.seatY + 2.0, -1.6), count: tier.mobile ? 16 : 30 });
   hero.add(strands.group);
   let throneFigure;
-  if (HERO.throne) { throneFigure = createHeroCard(HERO.throne, 2.6, loader); throneFigure.group.position.set(0, throne.daisTop, 0.15); }
+  if (HERO.throne) { throneFigure = createHeroCard(HERO.throne, loader, tier); throneFigure.group.position.set(0, throne.daisTop - 0.04, 0.2); }
   else {
     throneFigure = await createFigure({ pose: 'seated', env, cape: true });
     throneFigure.seatOn(throne.seatY);
@@ -75,11 +75,12 @@ export async function createWorld(renderer, tier) {
   updaters.push((t, dt, cam) => throneFigure.update(t, cam));
   const headPos = new THREE.Vector3(0, throne.daisTop + 2.3, 0.15);
   scene.updateMatrixWorld(true);
-  if (throneFigure.bones && throneFigure.bones['mixamorigHead']) { throneFigure.bones['mixamorigHead'].getWorldPosition(headPos); headPos.y += 0.1; headPos.z += 0.05; }
+  if (throneFigure.isCard) headPos.copy(throneFigure.head).add(throneFigure.group.position);
+  else if (throneFigure.bones && throneFigure.bones['mixamorigHead']) { throneFigure.bones['mixamorigHead'].getWorldPosition(headPos); headPos.y += 0.1; headPos.z += 0.05; }
 
-  const glowA = new THREE.PointLight(0x37ffb0, 10, 14, 2); glowA.position.set(0, 1.2, 3); hero.add(glowA);
-  const glowB = new THREE.PointLight(0x7a5cff, 12, 18, 2); glowB.position.set(-4, 5, -3); hero.add(glowB);
-  const spot = new THREE.SpotLight(0xdff6ff, 45, 30, 0.35, 0.7, 1.5); spot.position.set(0, 16, 9); spot.target.position.set(0, 2, 0); hero.add(spot, spot.target);
+  const glowA = new THREE.PointLight(0x37ffb0, 6, 16, 2); glowA.position.set(2.5, 4.5, 6); hero.add(glowA);
+  const glowB = new THREE.PointLight(0x7a5cff, 8, 18, 2); glowB.position.set(-4, 5, -3); hero.add(glowB);
+  
 
   [
     [{ seed: 3, r: 3.2, pillars: 2, crystalColor: 0x39ffb0 }, [-15, 2.5, -8]],
@@ -132,12 +133,12 @@ export async function createWorld(renderer, tier) {
   const workStrands = createStrands({ origin: new THREE.Vector3(0, 6, -80), count: tier.mobile ? 12 : 22, seed: 5, spread: 1.4 });
   work.add(workStrands.group);
   let watcher;
-  if (HERO.back) { watcher = createHeroCard(HERO.back, 1.9, loader); }
+  if (HERO.back) { watcher = createHeroCard(HERO.back, loader, tier); }
   else { watcher = await createFigure({ pose: 'standing', env, cape: true }); watcher.group.rotation.y = Math.PI; }
-  watcher.group.position.set(0, 0, 6);
+  watcher.group.position.set(0, 0, -7);
   work.add(watcher.group);
   updaters.push((t, dt, cam) => watcher.update(t, cam));
-  const workLight = new THREE.PointLight(0x7af0ff, 40, 16, 2); workLight.position.set(0, 5, 2); work.add(workLight);
+  const workLight = new THREE.PointLight(0x7af0ff, 20, 16, 2); workLight.position.set(0, 5, -10); work.add(workLight);
   [
     [{ seed: 81, r: 5, pillars: 2, crystalColor: 0x5ad8ff }, [-22, REG.work + 3, -20]],
     [{ seed: 83, r: 6, pillars: 3, crystalColor: 0x39ffb0 }, [26, REG.work + 6, -28]],
@@ -180,12 +181,12 @@ export async function createWorld(renderer, tier) {
     }
   }
   let traveller;
-  if (HERO.stand) { traveller = createHeroCard(HERO.stand, 1.9, loader); }
+  if (HERO.stand) { traveller = createHeroCard(HERO.stand, loader, tier); }
   else { traveller = await createFigure({ pose: 'standing', env, cape: true }); traveller.group.rotation.y = Math.PI; }
-  traveller.group.position.set(0, 0, -6);
+  traveller.group.position.set(0, 0, -42);
   contact.add(traveller.group);
   updaters.push((t, dt, cam) => traveller.update(t, cam));
-  const cl = new THREE.PointLight(0x7affd0, 30, 20, 2); cl.position.set(0, 4, -2); contact.add(cl);
+  const cl = new THREE.PointLight(0x7affd0, 20, 20, 2); cl.position.set(0, 4, -38); contact.add(cl);
   [
     [{ seed: 121, r: 7, pillars: 3, crystalColor: 0x39ffb0 }, [-30, REG.contact + 4, -60]],
     [{ seed: 123, r: 8, pillars: 4, crystalColor: 0xb18cff }, [34, REG.contact + 8, -80]],
@@ -229,5 +230,5 @@ export async function createWorld(renderer, tier) {
   }
   function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
 
-  return { scene, camera, update, resize, throne, bridge, portal, core, strands, REG, headPos };
+  return { scene, camera, update, resize, throne, bridge, portal, core, strands, REG, headPos, heroCard: !!throneFigure.isCard };
 }
