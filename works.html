@@ -27,14 +27,19 @@
     <div class="menu-x"><a class="xbtn" href="./#paths" data-cut="The Multiverse">← Universe</a><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="classic.html">Classic site</a></div>
   </div>
   <main class="orb-page" aria-label="My Works">
-    <canvas id="sphere" aria-label="A rotating sphere of my edits. Drag to rotate, click a frame to play it."></canvas>
-    <h1 class="orb-title" id="orb-title"><span>Timelines</span> <em>I've cut.</em></h1>
+    <div id="stage" aria-label="A sphere of my edits. Drag to rotate, click a frame to play it.">
+      <div id="world">
+        <div id="orb"></div>
+        <h1 id="headline"><span class="inner"><span style="--i:0">Timelines</span> <span style="--i:1">I've</span> <em style="--i:2">cut.</em></span></h1>
+      </div>
+    </div>
+    <div class="vig" aria-hidden="true"></div>
     <div class="orb-tip" id="orb-tip" aria-hidden="true"><small></small><b></b></div>
     <aside class="orb-bio">
       <div class="orb-me"><img src="assets/img/me-think-sm.webp" alt=""><b>Kaju Soni</b></div>
       <p>Editing is less about cutting and more about knowing when to hold. Every frame here was built to keep you watching — explainers, brand series, films and Shorts.</p>
     </aside>
-    <p class="orb-hint"><i><b id="orb-prog"></b></i>Drag to rotate · Click to play</p>
+    <p class="orb-hint"><s></s>Drag to rotate · Click to play</p>
     <p class="orb-foot"><a href="works-grid.html" data-cut="My Works">Grid view ↗</a><span>Selected Works 2026.</span></p>
     <noscript><p class="orb-noscript">This view needs JavaScript — <a href="works-grid.html">see the grid</a>.</p></noscript>
   </main>
@@ -54,6 +59,7 @@
     </div>
   </div>
   <div class="cut" id="cut" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="blade"></i><span class="cut-label">My Works</span></div>
+  <div id="dot" aria-hidden="true"></div>
   <div class="toast" id="toast" role="status"></div>
   <script type="module" src="js/works.js"></script>
 </body>

@@ -1,305 +1,156 @@
-// My Works — a slowly turning sphere of frames.
-// Drag empty space to spin it (with inertia). Grab a frame to pull it off the sphere;
-// drop it on another frame to swap them, or let go and it springs home. Click to play.
+// My Works — a sphere of frames built in CSS 3D.
+// The cards sit on a Fibonacci sphere around one 0×0 point; the title lives at that same
+// point inside the 3D world and counter-rotates so it always faces you. Drag to rotate
+// (with momentum), it drifts slowly on its own, and a click plays the video.
 import '../pages.js';
-import * as THREE from 'three';
 import { WORKS } from '../config.js';
-import { $, thumb, CAT_COL, buildPlayer } from './common.js';
+import { $, $$, thumb, buildPlayer } from './common.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const mobile = matchMedia('(pointer: coarse)').matches || innerWidth < 700;
+const coarse = matchMedia('(pointer: coarse)').matches;
 const player = buildPlayer();
-const canvas = $('#sphere');
-const tip = $('#orb-tip');
+const stage = $('#stage'), world = $('#world'), orb = $('#orb'), headline = $('#headline'), tip = $('#orb-tip');
+const D2R = Math.PI / 180;
 
-let renderer;
-try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' }); }
-catch (e) { location.replace('works-grid.html'); throw e; }
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-const R = 5;
-const sphere = new THREE.Group();
-scene.add(sphere);
+// ---------------------------------------------------------------- cards on a Fibonacci sphere
+const N = WORKS.length, GA = Math.PI * (3 - Math.sqrt(5));
+const cards = WORKS.map((w, i) => {
+  const y = 1 - (i / (N - 1)) * 2, rad = Math.sqrt(Math.max(0, 1 - y * y)), th = i * GA;
+  const x = Math.cos(th) * rad, z = Math.sin(th) * rad;
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = 'fc' + (w.p === 'yt' ? ' wide' : '');
+  el.dataset.idx = i;
+  el.setAttribute('aria-label', `Play: ${w.t}`);
+  el.innerHTML = `<figure><img alt="" draggable="false" decoding="async"><span class="play" aria-hidden="true"></span></figure>`;
+  const img = el.querySelector('img');
+  img.onload = () => img.classList.add('in');
+  img.onerror = () => { el.classList.add('noimg'); el.querySelector('figure').insertAdjacentHTML('beforeend', `<span class="ph">${w.t}</span>`); };
+  img.src = thumb(w);
+  orb.appendChild(el);
+  return { el, w, x, y, z, lat: Math.asin(y) / D2R, lon: Math.atan2(x, z) / D2R, d: -1, o: -1 };
+});
 
-// ---------------------------------------------------------------- textures (one per video)
-const loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
-function fallbackCard(w) {
-  const [c1, c2] = CAT_COL[w.cat] || ['#3dffb5', '#9d80ff'];
-  const c = document.createElement('canvas'); c.width = 360; c.height = 560;
-  const g = c.getContext('2d');
-  const gr = g.createLinearGradient(0, 0, 360, 560); gr.addColorStop(0, c1); gr.addColorStop(1, c2);
-  g.fillStyle = '#05070d'; g.fillRect(0, 0, 360, 560);
-  g.globalAlpha = 0.45; g.fillStyle = gr; g.fillRect(0, 0, 360, 560); g.globalAlpha = 1;
-  g.fillStyle = '#fff'; g.font = '600 30px Cinzel, serif'; g.textAlign = 'center';
-  const words = w.t.toUpperCase().split(' '); let line = '', y = 250;
-  for (const wd of words) { if (g.measureText(line + wd).width > 300) { g.fillText(line.trim(), 180, y); line = ''; y += 40; } line += wd + ' '; }
-  g.fillText(line.trim(), 180, y);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-}
-const texCache = new Map();
-function texFor(w) {
-  if (texCache.has(w.id)) return texCache.get(w.id);
-  const holder = { tex: fallbackCard(w), aspect: 360 / 560, users: [] };
-  texCache.set(w.id, holder);
-  loader.load(thumb(w), (t) => {
-    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-    holder.tex = t; holder.aspect = t.image.width / t.image.height;
-    holder.users.forEach((m) => { m.uniforms.map.value = t; m.uniforms.uImgAspect.value = holder.aspect; });
-  }, undefined, () => { /* keep the designed fallback card */ });
-  return holder;
-}
-
-// ---------------------------------------------------------------- the frames
-const PW = 1.85, PH = 2.75;                       // panel size (portrait, like the reels)
-const VERT = /* glsl */ `
-  varying vec2 vUv; varying vec3 vN; varying vec3 vV;
-  void main(){
-    vUv = uv;
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    vN = normalize(normalMatrix * normalize(position));
-    vV = -mv.xyz;
-    gl_Position = projectionMatrix * mv;
-  }`;
-const FRAG = /* glsl */ `
-  uniform sampler2D map; uniform float uImgAspect, uPanelAspect, uHover, uLift, uIntro;
-  uniform vec3 uTint;
-  varying vec2 vUv; varying vec3 vN; varying vec3 vV;
-  float rbox(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
-  void main(){
-    vec2 p = (vUv - 0.5) * vec2(uPanelAspect, 1.0);
-    float d = rbox(p, vec2(uPanelAspect, 1.0) * 0.5, 0.035);
-    if (d > 0.0) discard;
-    // cover-fit the thumbnail into the frame
-    vec2 uv = vUv;
-    if (!gl_FrontFacing) uv.x = 1.0 - uv.x;
-    float k = uPanelAspect / uImgAspect;
-    if (k < 1.0) uv.x = 0.5 + (uv.x - 0.5) * k; else uv.y = 0.5 + (uv.y - 0.5) / k;
-    vec3 col = texture2D(map, uv).rgb;
-    // depth: frames facing you are lit, frames curving away and the far side fall into shadow
-    float f = dot(normalize(vN), normalize(vV));
-    float lit = gl_FrontFacing ? mix(0.28, 1.0, smoothstep(-0.05, 0.75, f)) : 0.16;
-    lit = mix(lit, 1.0, uLift);
-    col *= lit * (1.0 + uHover * 0.18);
-    // a soft inner vignette and a hairline border that lights up on hover
-    float vig = smoothstep(-0.18, -0.0, d);
-    col *= 1.0 - vig * 0.35;
-    float edge = smoothstep(-0.012, -0.002, d);
-    col = mix(col, uTint, edge * (0.12 + uHover * 0.7));
-    gl_FragColor = vec4(col * uIntro, 1.0);
-  }`;
-
-function panelGeometry() {
-  const g = new THREE.PlaneGeometry(PW, PH, 14, 20);
-  const p = g.attributes.position, v = new THREE.Vector3();
-  for (let i = 0; i < p.count; i++) { v.set(p.getX(i), p.getY(i), R).normalize().multiplyScalar(R); p.setXYZ(i, v.x, v.y, v.z); }
-  g.computeVertexNormals(); g.computeBoundingSphere();
-  return g;
-}
-const GEO = panelGeometry();
-const COUNT = mobile ? 28 : 36;
-const Z = new THREE.Vector3(0, 0, 1);
-const slots = [];
-const golden = Math.PI * (3 - Math.sqrt(5));
-let seed = 5; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-for (let i = 0; i < COUNT; i++) {
-  const y = 1 - ((i + 0.5) / COUNT) * 2, r = Math.sqrt(1 - y * y), th = i * golden;
-  const d = new THREE.Vector3(Math.cos(th) * r, y * 0.96, Math.sin(th) * r).normalize();
-  const q = new THREE.Quaternion().setFromUnitVectors(Z, d);
-  q.multiply(new THREE.Quaternion().setFromAxisAngle(Z, (rnd() - 0.5) * 0.5));   // a little tilt each, like scattered prints
-  slots.push(q);
-}
-const panels = [];
-for (let i = 0; i < COUNT; i++) {
-  const wi = (i * 7) % WORKS.length;          // spread repeats around the sphere
-  const w = WORKS[wi];
-  const h = texFor(w);
-  const [c1] = CAT_COL[w.cat] || ['#3dffb5'];
-  const mat = new THREE.ShaderMaterial({
-    vertexShader: VERT, fragmentShader: FRAG, side: THREE.DoubleSide,
-    uniforms: { map: { value: h.tex }, uImgAspect: { value: h.aspect }, uPanelAspect: { value: PW / PH }, uHover: { value: 0 }, uLift: { value: 0 }, uIntro: { value: 0 }, uTint: { value: new THREE.Color(c1) } },
-  });
-  h.users.push(mat);
-  const mesh = new THREE.Mesh(GEO, mat);
-  mesh.quaternion.copy(slots[i]);
-  mesh.userData.i = i;
-  sphere.add(mesh);
-  panels.push({ mesh, mat, wi, slot: i, hover: 0, lift: 0, off: new THREE.Vector3(), vel: new THREE.Vector3(), intro: 0, delay: rnd() * 0.9, pulse: 0 });
-}
-
-// ---------------------------------------------------------------- layout
-function resize() {
+// ---------------------------------------------------------------- layout (radius, card size, perspective)
+let R = 300, lastW = 0, lastH = 0, persp = 1150;
+function layout(force) {
   const W = innerWidth, H = innerHeight;
-  renderer.setSize(W, H, false);
-  camera.aspect = W / H;
-  // fit the sphere: a little bigger than the screen's short side, like looking into it
-  const vf = THREE.MathUtils.degToRad(camera.fov) / 2;
-  const hf = Math.atan(Math.tan(vf) * camera.aspect);
-  const fit = Math.min(vf, hf);
-  camera.position.set(0, 0, (R * (W < 700 ? 0.82 : 0.9)) / Math.sin(fit));   // the sphere spills past the edges, like looking into it
-  camera.lookAt(0, 0, 0);
-  camera.updateProjectionMatrix();
+  if (!force && Math.abs(W - lastW) < 20 && Math.abs(H - lastH) < 20) return;
+  lastW = W; lastH = H;
+  const hr = W <= 380 ? 0.38 : W <= 640 ? 0.42 : 0.46;
+  const wr = W <= 380 ? 0.48 : W <= 640 ? 0.52 : 0.58;
+  const floor = W <= 380 ? 108 : W <= 640 ? 120 : 155;
+  R = Math.max(floor, Math.min(480, H * hr, W * wr));
+  const sc = W <= 380 ? 0.44 : W <= 640 ? 0.46 : 0.47;
+  const cw = Math.round(Math.max(72, R * sc));
+  document.documentElement.style.setProperty('--cw', cw + 'px');
+  persp = W <= 380 ? 620 : W <= 640 ? 760 : W <= 900 ? 920 : 1150;
+  document.documentElement.style.setProperty('--persp', persp + 'px');
+  for (const c of cards) {
+    c.el.style.transform = `translate3d(${(c.x * R).toFixed(2)}px, ${(-c.y * R).toFixed(2)}px, ${(c.z * R).toFixed(2)}px) rotateY(${c.lon.toFixed(3)}deg) rotateX(${c.lat.toFixed(3)}deg)`;
+  }
 }
-resize(); addEventListener('resize', resize);
+layout(true);
+addEventListener('resize', () => layout(false));
+addEventListener('orientationchange', () => setTimeout(() => layout(true), 220));
+if (window.visualViewport) visualViewport.addEventListener('resize', () => layout(false));
 
-// ---------------------------------------------------------------- interaction
-const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(), hit = new THREE.Vector3();
-const spin = new THREE.Vector3(0, reduce ? 0.03 : 0.085, 0);          // angular velocity (world axes), rad/s
-const AUTO = spin.clone();
-let mode = null, down = null, hovered = null, dragPanel = null;
-const setNdc = (e) => ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-function pick() {
-  ray.setFromCamera(ndc, camera);
-  const h = ray.intersectObjects(panels.map((p) => p.mesh), false)[0];
-  return h ? panels[h.object.userData.i] : null;
-}
-const worldCenter = (p, out) => { const d = new THREE.Vector3(0, 0, R).applyQuaternion(p.mesh.quaternion).add(p.mesh.position); return sphere.localToWorld(out.copy(d)); };
-const screenOf = (v) => { const s = v.clone().project(camera); return [(s.x * 0.5 + 0.5) * innerWidth, (-s.y * 0.5 + 0.5) * innerHeight, s.z]; };
-
-canvas.addEventListener('pointerdown', (e) => {
-  setNdc(e);
-  canvas.setPointerCapture(e.pointerId);
-  const p = pick();
-  down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now(), p, moved: 0 };
-  mode = p ? 'press' : 'rotate';
+// ---------------------------------------------------------------- drag to rotate (with momentum)
+const st = { spin: 0, tilt: -4, dragX: 0, dragY: 0, velX: 0, velY: 0, idle: reduce ? 0 : 3.2 };   // idle: slow drift, deg/s
+let ptr = null;
+const SLOP = coarse ? 14 : 6, K = 0.13;
+stage.addEventListener('pointerdown', (e) => {
+  if (!$('#player').hidden) return;
+  const card = e.target.closest('.fc');                  // read before capture retargets the event
+  ptr = { id: e.pointerId, x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, card, moved: 0, captured: false, type: e.pointerType };
+  if (e.pointerType !== 'touch') { stage.setPointerCapture(e.pointerId); ptr.captured = true; }
   document.body.classList.add('grabbing');
 });
-canvas.addEventListener('pointermove', (e) => {
-  setNdc(e);
-  if (!down) {
-    const p = pick();
-    if (p !== hovered) { hovered = p; canvas.style.cursor = p ? 'pointer' : 'grab'; }
-    moveTip(e);
-    return;
+stage.addEventListener('pointermove', (e) => {
+  if (!ptr || e.pointerId !== ptr.id) return;
+  const dx = e.clientX - ptr.lx, dy = e.clientY - ptr.ly;
+  ptr.lx = e.clientX; ptr.ly = e.clientY;
+  ptr.moved = Math.max(ptr.moved, Math.hypot(e.clientX - ptr.x0, e.clientY - ptr.y0));
+  if (!ptr.captured && ptr.moved > 10) {
+    const ax = Math.abs(e.clientX - ptr.x0), ay = Math.abs(e.clientY - ptr.y0);
+    if (ay > ax * 1.15) { ptr = null; document.body.classList.remove('grabbing'); return; }   // vertical swipe: let the page be
+    stage.setPointerCapture(e.pointerId); ptr.captured = true;
   }
-  const dx = e.clientX - down.lx, dy = e.clientY - down.ly;
-  const now = performance.now(), dt = Math.max(8, now - down.t) / 1000;
-  down.lx = e.clientX; down.ly = e.clientY; down.t = now;
-  down.moved += Math.abs(dx) + Math.abs(dy);
-  if (mode === 'press' && down.moved > 7) {
-    // pull the frame off the sphere
-    mode = 'panel'; dragPanel = down.p; hovered = dragPanel;
-    const c = worldCenter(dragPanel, new THREE.Vector3());
-    const n = camera.position.clone().sub(c).normalize();
-    plane.setFromNormalAndCoplanarPoint(n, c.addScaledVector(n, 1.2));
-    spin.multiplyScalar(0.2);
-  }
-  if (mode === 'rotate') {
-    const k = 0.0052;
-    spin.set(dy * k / dt * 0.6, dx * k / dt * 0.6, 0).clampLength(0, 5);
-    applySpin(dy * k, dx * k);
-  } else if (mode === 'panel') {
-    ray.setFromCamera(ndc, camera);
-    if (ray.ray.intersectPlane(plane, hit)) {
-      const local = sphere.worldToLocal(hit.clone());
-      const home = new THREE.Vector3(0, 0, R).applyQuaternion(dragPanel.mesh.quaternion);
-      dragPanel.off.copy(local.sub(home));
-    }
-    const over = dropTarget(e.clientX, e.clientY);
-    panels.forEach((p) => (p.drop = p === over));
-  }
-  moveTip(e);
+  if (ptr.moved <= SLOP && !ptr.captured) return;
+  st.dragX += dx * K; st.dragY -= dy * K;
+  st.velX = dx * K; st.velY = -dy * K;
+  clampPitch();
 });
-const end = (e) => {
-  if (!down) return;
-  if (mode === 'press' && down.p) {
-    const p = down.p; p.pulse = 1;
-    player.open(p.wi, { getBoundingClientRect: () => ({ left: down.x, top: down.y, width: 0, height: 0 }) });
-  } else if (mode === 'panel' && dragPanel) {
-    const target = dropTarget(e.clientX, e.clientY);
-    if (target) {
-      // swap the two frames' places on the sphere
-      const a = dragPanel.slot; dragPanel.slot = target.slot; target.slot = a;
-      target.pulse = 1;
-    }
-    dragPanel.vel.set(0, 0, 0);
-    panels.forEach((p) => (p.drop = false));
+const up = (e) => {
+  if (!ptr || e.pointerId !== ptr.id) return;
+  if (ptr.moved <= SLOP && ptr.card) {
+    const i = +ptr.card.dataset.idx;
+    st.velX = st.velY = 0;
+    player.open(i, ptr.card);
   }
-  down = null; mode = null; dragPanel = null;
-  document.body.classList.remove('grabbing');
-  tip.classList.remove('on'); hovered = null;
+  ptr = null; document.body.classList.remove('grabbing');
 };
-canvas.addEventListener('pointerup', end);
-canvas.addEventListener('pointercancel', end);
-canvas.addEventListener('pointerleave', () => { if (!down) { hovered = null; tip.classList.remove('on'); } });
+stage.addEventListener('pointerup', up);
+stage.addEventListener('pointercancel', up);
+// keyboard: each card is a button
+cards.forEach((c, i) => c.el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); player.open(i, c.el); } }));
+function clampPitch() { const p = st.tilt + st.dragY; if (p > 32) st.dragY = 32 - st.tilt; if (p < -32) st.dragY = -32 - st.tilt; }
 
-function dropTarget(x, y) {
-  let best = null, bd = Math.min(innerWidth, innerHeight) * 0.09;
-  const c = new THREE.Vector3();
-  for (const p of panels) {
-    if (p === dragPanel) continue;
-    worldCenter(p, c);
-    const [sx, sy, sz] = screenOf(c);
-    const facing = c.clone().normalize().dot(camera.position.clone().normalize()) > 0.15;
-    const d = Math.hypot(sx - x, sy - y);
-    if (facing && sz < 1 && d < bd) { bd = d; best = p; }
-  }
-  return best;
-}
-
-const qx = new THREE.Quaternion(), qy = new THREE.Quaternion(), AX = new THREE.Vector3(1, 0, 0), AY = new THREE.Vector3(0, 1, 0);
-function applySpin(ax, ay) {
-  qx.setFromAxisAngle(AX, ax); qy.setFromAxisAngle(AY, ay);
-  sphere.quaternion.premultiply(qy).premultiply(qx);
-}
-
-function moveTip(e) {
-  const p = mode === 'panel' ? dragPanel : hovered;
-  if (!p) { tip.classList.remove('on'); return; }
-  const w = WORKS[p.wi];
-  tip.querySelector('small').textContent = mode === 'panel' ? 'Drop on a frame to swap' : w.cat;
-  tip.querySelector('b').textContent = w.t;
-  tip.style.transform = `translate(${e.clientX + 18}px, ${e.clientY + 18}px)`;
+// hover: a small title card follows the cursor
+stage.addEventListener('pointerover', (e) => {
+  const c = e.target.closest('.fc');
+  if (!c || ptr) { tip.classList.remove('on'); return; }
+  const w = WORKS[+c.dataset.idx];
+  tip.querySelector('small').textContent = w.cat; tip.querySelector('b').textContent = w.t;
   tip.classList.add('on');
-}
+});
+stage.addEventListener('pointerout', (e) => { if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('.fc')) tip.classList.remove('on'); });
+
+// ---------------------------------------------------------------- custom cursor (fine pointers)
+const dot = $('#dot');
+const cur = { x: innerWidth / 2, y: innerHeight / 2, tx: innerWidth / 2, ty: innerHeight / 2 };
+if (!coarse) {
+  addEventListener('pointermove', (e) => {
+    cur.tx = e.clientX; cur.ty = e.clientY;
+    dot.classList.toggle('wide', !!(e.target.closest && e.target.closest('.fc, a, button')));
+    tip.style.transform = `translate(${e.clientX + 22}px, ${e.clientY + 22}px)`;
+  }, { passive: true });
+} else dot.remove();
 
 // ---------------------------------------------------------------- frame loop
-const clock = new THREE.Clock();
-const qTmp = new THREE.Quaternion();
-const prog = $('#orb-prog');
-let angle = 0, t0 = null;
-function frame() {
+let last = performance.now();
+function frame(now) {
   requestAnimationFrame(frame);
-  if (document.hidden || !$('#player').hidden) return;
-  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
-  if (t0 === null) t0 = t;
-  // spin: drag inertia eases back to the slow auto-rotation
-  if (mode === 'rotate') spin.multiplyScalar(Math.pow(0.02, dt));   // holding still kills the fling
-  else {
-    spin.lerp(mode === 'panel' ? AUTO.clone().multiplyScalar(0.15) : AUTO, Math.min(1, dt * 1.4));
-    applySpin(spin.x * dt, spin.y * dt);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!coarse) { cur.x += (cur.tx - cur.x) * 0.2; cur.y += (cur.ty - cur.y) * 0.2; dot.style.transform = `translate3d(${cur.x.toFixed(1)}px, ${cur.y.toFixed(1)}px, 0)`; }
+  const open = !$('#player').hidden;
+  if (!ptr && !open) {
+    st.dragX += st.velX; st.dragY += st.velY;
+    st.velX *= 0.94; st.velY *= 0.94;
+    if (Math.abs(st.velX) < 0.002) st.velX = 0; if (Math.abs(st.velY) < 0.002) st.velY = 0;
+    st.spin += st.idle * dt;                                   // slow drift when left alone
+    clampPitch();
   }
-  angle += Math.abs(spin.y) * dt;
-  prog.style.transform = `scaleX(${((angle / (Math.PI * 2)) % 1).toFixed(3)})`;
-  sphere.rotation.z = 0;
-  for (const p of panels) {
-    const it = Math.min(1, Math.max(0, (t - t0 - 0.2 - p.delay) / 1.4));
-    p.intro = 1 - Math.pow(1 - it, 3);
-    // glide toward its slot (after a swap) and spring home when let go
-    qTmp.copy(slots[p.slot]);
-    p.mesh.quaternion.slerp(qTmp, Math.min(1, dt * (p === dragPanel ? 0 : 4.5)));
-    if (p !== dragPanel) {
-      p.vel.addScaledVector(p.off, -dt * 60).multiplyScalar(Math.pow(0.02, dt));
-      p.off.addScaledVector(p.vel, dt);
-    }
-    const lifted = p === dragPanel ? 1 : 0;
-    p.lift += (lifted - p.lift) * Math.min(1, dt * 10);
-    const hv = (p === hovered || p.drop) ? 1 : 0;
-    p.hover += (hv - p.hover) * Math.min(1, dt * 10);
-    p.pulse = Math.max(0, p.pulse - dt * 2.2);
-    // hovered frames lean out of the sphere a little
-    const out = new THREE.Vector3(0, 0, 1).applyQuaternion(p.mesh.quaternion).multiplyScalar(p.hover * 0.28 + p.lift * 0.6 + Math.sin(p.pulse * Math.PI) * 0.4);
-    p.mesh.position.copy(p.off).add(out).multiplyScalar(1);
-    const s = (0.25 + 0.75 * p.intro) * (1 + p.lift * 0.14 + p.hover * 0.04);
-    p.mesh.scale.setScalar(s);
-    p.mat.uniforms.uIntro.value = p.intro;
-    p.mat.uniforms.uHover.value = p.hover;
-    p.mat.uniforms.uLift.value = p.lift;
-    p.mesh.renderOrder = p === dragPanel ? 2 : 0;
+  const sx = st.tilt + st.dragY, sy = st.spin + st.dragX;
+  world.style.transform = `rotateY(${sy.toFixed(3)}deg) rotateX(${sx.toFixed(3)}deg)`;
+  headline.style.transform = `rotateX(${(-sx).toFixed(3)}deg) rotateY(${(-sy).toFixed(3)}deg) translateZ(${(R * 0.62).toFixed(1)}px)`;
+  // depth: cards on the far side fall into a black wash
+  const cx = Math.cos(sx * D2R), sxn = Math.sin(sx * D2R), cy = Math.cos(sy * D2R), syn = Math.sin(sy * D2R);
+  const near = persp * 0.66;
+  for (const c of cards) {
+    // CSS space: (x, -y, z); rotateX(sx) then rotateY(sy)
+    const X = c.x, Y = -c.y, Z = c.z;
+    const z1 = Y * sxn + Z * cx;
+    const zf = -X * syn + z1 * cy;
+    const base = 0.14 + 0.86 * Math.pow((zf + 1) / 2, 0.85);
+    let dim = 1 - base;
+    if (open) dim = Math.min(1, dim + 0.78);
+    const az = zf * R;
+    const fade = az > near ? Math.max(0, 1 - (az - near) / 190) : 1;
+    const d = Math.round(dim * 100) / 100, o = Math.round(fade * 100) / 100;
+    if (d !== c.d) { c.el.style.setProperty('--d', d); c.d = d; }
+    if (o !== c.o) { c.el.style.opacity = o; c.o = o; }
   }
-  renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);
-setTimeout(() => $('#orb-title').classList.add('in'), 600);
-window.__orb = { panels, camera, sphere, worldCenter, screenOf };
+requestAnimationFrame(() => document.body.classList.add('revealed'));
