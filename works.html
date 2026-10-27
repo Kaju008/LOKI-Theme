@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="css/universe.css">
   <link rel="stylesheet" href="css/pages.css">
 </head>
-<body class="page">
+<body class="page orb-body">
   <canvas id="stars" aria-hidden="true"></canvas>
   <div class="page-bg" aria-hidden="true"></div>
   <header class="hud">
@@ -26,17 +26,19 @@
     <a href="about.html" data-cut="The Timekeeper"><small>01</small>The Timekeeper</a><a href="works.html" data-cut="My Works"><small>02</small>My Works</a><a href="lab.html" data-cut="The Lab"><small>03</small>The Lab</a>
     <div class="menu-x"><a class="xbtn" href="./#paths" data-cut="The Multiverse">← Universe</a><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="classic.html">Classic site</a></div>
   </div>
-  <main class="page-main">
-    <header class="page-head" data-rise>
-      <p class="eyebrow"><span class="dot"></span>Path II · My Works</p>
-      <h1 class="h-cinzel">My Works</h1>
-      <p class="lead">Timelines I've cut — explainers, brand series, films and Shorts. Tap one to play it.</p>
-    </header>
-    <div class="filters" id="filters" role="tablist" aria-label="Filter by category" data-rise></div>
-    <section class="works" id="works" aria-label="Portfolio"></section>
-    <a class="back" href="./#paths" data-cut="The Multiverse">← Back to the three paths</a>
+  <main class="orb-page" aria-label="My Works">
+    <canvas id="sphere" aria-label="A rotating sphere of my edits. Drag to rotate, click a frame to play it."></canvas>
+    <h1 class="orb-title" id="orb-title"><span>Timelines</span> <em>I've cut.</em></h1>
+    <div class="orb-tip" id="orb-tip" aria-hidden="true"><small></small><b></b></div>
+    <aside class="orb-bio">
+      <div class="orb-me"><img src="assets/img/me-think-sm.webp" alt=""><b>Kaju Soni</b></div>
+      <p>Editing is less about cutting and more about knowing when to hold. Every frame here was built to keep you watching — explainers, brand series, films and Shorts.</p>
+    </aside>
+    <p class="orb-hint"><i><b id="orb-prog"></b></i>Drag to rotate · Click to play</p>
+    <p class="orb-foot"><a href="works-grid.html" data-cut="My Works">Grid view ↗</a><span>Selected Works 2026.</span></p>
+    <noscript><p class="orb-noscript">This view needs JavaScript — <a href="works-grid.html">see the grid</a>.</p></noscript>
   </main>
-  <footer class="page-foot">© 2026 Kaju Soni · Bengaluru · <a href="https://github.com/Kaju008/LOKI-Theme/blob/main/CREDITS.md" target="_blank" rel="noopener">Credits</a></footer>
+  <footer class="page-foot" hidden>© 2026 Kaju Soni · Bengaluru · <a href="https://github.com/Kaju008/LOKI-Theme/blob/main/CREDITS.md" target="_blank" rel="noopener">Credits</a></footer>
   <div class="player" id="player" hidden>
     <div class="player-scrim" data-close></div>
     <div class="player-burst" id="player-burst"></div>

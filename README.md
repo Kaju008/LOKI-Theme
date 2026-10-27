@@ -9,7 +9,7 @@ over an infinite glass bridge with a live editing timeline running beneath it. S
 Everything is interactive: click the tree to shake leaves loose, drag and spin the planets, grab and throw the asteroids.
 
 - `index.html`, `css/universe.css` — the universe (intro, scroll story, path boards)
-- `about.html`, `works.html`, `lab.html` — the three paths (`css/pages.css`)
+- `about.html`, `works.html`, `lab.html` — the three paths (`css/pages.css`). My Works is a draggable 3D sphere of frames; `works-grid.html` is the backup grid version
 - `classic.html` — the previous version of the site
 - `src/universe/` — bridge + timeline shader, tree, throne/asteroids, scene, camera story
 - `src/pages/` — page scripts. Edit `src/config.js` for text, videos, tools and contact.
