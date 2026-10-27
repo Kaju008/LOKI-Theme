@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Reel — Kaju Soni</title>
+  <meta name="description" content="Kaju Soni's showreel: a live editing timeline of explainers, brand series, films and Shorts.">
+  <meta name="theme-color" content="#020308">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/universe.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body class="page reel-body">
+  
+  
+  <header class="hud">
+    <a class="brand" href="./" aria-label="Kaju Soni — replay the universe"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 4h16l-6 10 6 10H8l6-10z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 14v10" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="14" r="2.2" fill="currentColor"/></svg><span>Kaju Soni</span></a>
+    <nav class="nav" aria-label="Paths"><a href="about.html" data-cut="The Timekeeper">The Timekeeper</a><a href="works.html" data-cut="My Works" class="on" aria-current="page">My Works</a><a href="lab.html" data-cut="The Lab">The Lab</a></nav>
+    <div class="hud-right">
+      <a class="xbtn sm back-uni" href="./#paths" data-cut="The Multiverse"><span>← Universe</span></a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><i></i><i></i></button>
+    </div>
+  </header>
+  <div class="menu" id="menu" hidden>
+    <a href="about.html" data-cut="The Timekeeper"><small>01</small>The Timekeeper</a><a href="works.html" data-cut="My Works"><small>02</small>My Works</a><a href="lab.html" data-cut="The Lab"><small>03</small>The Lab</a>
+    <div class="menu-x"><a class="xbtn" href="./#paths" data-cut="The Multiverse">← Universe</a><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="classic.html">Classic site</a></div>
+  </div>
+  <div class="reel-bg" aria-hidden="true">
+    <div class="space"></div>
+    <video id="bgv" muted loop playsinline preload="auto" disablepictureinpicture></video>
+    <canvas id="aura"></canvas>
+    <canvas id="stars"></canvas>
+    <div class="reel-shade"></div>
+  </div>
+  <main class="reel" aria-label="The Reel">
+    <header class="reel-head">
+      <p class="eyebrow"><span class="dot"></span><span id="reel-kicker"></span></p>
+      <h1 class="reel-title" id="reel-title"></h1>
+      <p class="reel-sub" id="reel-sub"></p>
+    </header>
+    <section class="arc-wrap" aria-label="Videos">
+      <div class="arc" id="arc"></div>
+    </section>
+    <section class="tl" aria-label="Timeline">
+      <div class="tl-bar">
+        <span class="tl-rec"><i></i>Live</span>
+        <span class="tl-now"><small id="now-cat"></small><b id="now-title"></b></span>
+        <span class="tl-tc" id="tl-tc">00:00:00:00</span>
+      </div>
+      <canvas id="tl"></canvas>
+    </section>
+    <p class="reel-links"><a href="works.html" data-cut="My Works">◎ Sphere</a><a href="works-grid.html" data-cut="My Works">▦ Grid</a></p>
+  </main>
+  <footer class="page-foot" hidden>© 2026 Kaju Soni · Bengaluru · <a href="https://github.com/Kaju008/LOKI-Theme/blob/main/CREDITS.md" target="_blank" rel="noopener">Credits</a></footer>
+  <div class="player" id="player" hidden>
+    <div class="player-scrim" data-close></div>
+    <div class="player-burst" id="player-burst"></div>
+    <div class="player-card">
+      <div class="player-frame" id="player-frame"></div>
+      <div class="player-bar">
+        <button class="pbtn" id="p-prev" aria-label="Previous">←</button>
+        <div class="player-meta"><b id="p-title"></b><span id="p-cat"></span></div>
+        <a class="pbtn wide" id="p-ext" target="_blank" rel="noopener">Open ↗</a>
+        <button class="pbtn" id="p-next" aria-label="Next">→</button>
+        <button class="pbtn" data-close aria-label="Close">✕</button>
+      </div>
+    </div>
+  </div>
+  <div class="cut" id="cut" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="blade"></i><span class="cut-label">The Reel</span></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="js/reel.js"></script>
+</body>
+</html>

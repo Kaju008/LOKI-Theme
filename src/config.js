@@ -83,3 +83,16 @@ export const TOOLS = {
     { n: 'ElevenLabs', icon: 'assets/icons/elevenlabs.svg', c: '#ffffff', d: 'Voice' },
   ],
 };
+
+// The Reel page (reel.html): curved panels gliding over a live editing timeline.
+// speed: how fast it rolls — 1 (slow) … 2.5 (brisk). ~14 s per video at 1, ~6 s at 2.5.
+// bg: your animated background. Drop the files in assets/reel/ and fill in the names
+//     (video: a muted seamless loop .mp4; poster: a still .webp shown while it loads).
+export const REEL = {
+  speed: 2,
+  bg: { video: null, poster: null, mobileVideo: null },
+  ring: true,          // the soft aura ring drawn behind the title (turn off if your video already has one)
+  title: 'Every cut, in motion.',
+  kicker: 'The Reel · always rolling',
+  sub: 'A live timeline of my edits. Watch it roll — or click any frame to play it.',
+};
