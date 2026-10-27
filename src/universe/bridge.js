@@ -14,15 +14,22 @@ export const WIDTH = 8.6;
 export const PLAZA = { c: new THREE.Vector3(0, DECK_Y, -5), r: 12.5 };
 
 // Paths in the XZ plane (y = deck). s grows away from the plaza.
+// Behind the tree one road leaves the plaza; at the fork (z = FORK_Z) it splits like a Y into
+// three roads: left and right peel off the trunk's edges and curve away, the middle runs straight on.
+export const FORK_Z = -34;
 function makePaths() {
   const P = (x, z) => new THREE.Vector3(x, DECK_Y, z);
+  const F = FORK_Z;
   const front = new THREE.CatmullRomCurve3([P(0, PLAZA.c.z + PLAZA.r - 0.6), P(0, 300), P(0, 1100)]);
-  const a = THREE.MathUtils.degToRad(38);
-  const start = (ang) => P(Math.sin(ang) * (PLAZA.r - 0.8), PLAZA.c.z - Math.cos(ang) * (PLAZA.r - 0.8));
-  const left = new THREE.CatmullRomCurve3([start(-a), P(-9.5, -27), P(-21, -52), P(-62, -140), P(-200, -420), P(-430, -900)], false, 'centripetal');
-  const mid = new THREE.CatmullRomCurve3([start(0), P(0, -40), P(0, -160), P(0, -520), P(0, -1000)], false, 'centripetal');
-  const right = new THREE.CatmullRomCurve3([start(a), P(9.5, -27), P(21, -52), P(62, -140), P(200, -420), P(430, -900)], false, 'centripetal');
-  return { front, left, mid, right };
+  const mid = new THREE.CatmullRomCurve3([P(0, PLAZA.c.z - PLAZA.r + 0.6), P(0, F), P(0, F - 140), P(0, F - 520), P(0, -1100)], false, 'centripetal');
+  const side = (e) => new THREE.CatmullRomCurve3([P(0, F + 4), P(0, F), P(e * 2.4, F - 12), P(e * 8.5, F - 24), P(e * 19, F - 38), P(e * 46, F - 74), P(e * 150, F - 230), P(e * 420, F - 760)], false, 'centripetal');
+  return { front, left: side(-1), mid, right: side(1) };
+}
+// metres along `curve` where it has drifted `gap` metres from the middle road (the gore of the fork)
+function goreS(curve, gap) {
+  const L = curve.getLength(), p = new THREE.Vector3();
+  for (let s = 0; s < L; s += 0.5) { curve.getPointAt(s / L, p); if (Math.abs(p.x) >= gap) return s; }
+  return L;
 }
 
 // Flat ribbon along a curve. aUV = (across metres, along metres)
@@ -187,8 +194,8 @@ export function createTimelineBridge({ tier, env }) {
   const deckGeos = [];
   for (const [k, c] of Object.entries(paths)) {
     const w = WIDTH;
-    const g = ribbon(c, w, k === 'front' ? 3 : 2, -0.22);
-    const m = new THREE.Mesh(g, tlMat); m.frustumCulled = false; m.renderOrder = 1;
+    const g = ribbon(c, w, k === 'front' ? 3 : 2, k === 'left' || k === 'right' ? -0.235 : -0.22);
+    const m = new THREE.Mesh(g, tlMat); m.frustumCulled = false; m.renderOrder = k === 'left' || k === 'right' ? 0.9 : 1;
     group.add(m);
     lanes[k] = c;
     deckGeos.push(ribbon(c, w + 0.3, k === 'front' ? 3 : 2, 0));
@@ -253,6 +260,29 @@ export function createTimelineBridge({ tier, env }) {
   depthDeck.rotation.x = -Math.PI / 2; depthDeck.position.y = DECK_Y - 0.25; depthDeck.renderOrder = 0;
   group.add(depthDeck);
 
+  // ---- road arrows: glowing chevrons painted on each road beyond the fork, flowing outward
+  const arrowFrag = /* glsl */ `
+    uniform float uTime; uniform vec3 uCol; varying vec2 vUV; varying vec3 vW;
+    void main(){
+      float x=vUV.x, s=vUV.y;
+      float k=mod(s-uTime*3.0, 7.0);                      // one chevron every 7 m, travelling away
+      float y=k-2.0; float d=abs(y - (1.6-abs(x)*0.9));    // chevron centre-line (points along +s)
+      float ch=smoothstep(0.32,0.12,d)*step(abs(x),1.5)*step(0.0,y+0.6)*step(y,2.2);
+      float dash=step(abs(x),0.06)*step(fract((s+uTime*3.0)/3.0),0.55)*0.5;    // dashed centre line
+      float fade=smoothstep(0.0,6.0,s)*smoothstep(120.0,40.0,s);
+      gl_FragColor=vec4(uCol*(ch*1.6+dash*0.6)*fade,1.0);
+    }`;
+  const ARROW_COL = { left: [0.25, 1.0, 0.75], mid: [1.0, 0.8, 0.35], right: [0.7, 0.5, 1.0] };
+  const forkMid = new THREE.CatmullRomCurve3([new THREE.Vector3(0, DECK_Y, FORK_Z - 6), new THREE.Vector3(0, DECK_Y, FORK_Z - 300)]);
+  for (const k of ['left', 'mid', 'right']) {
+    const c = k === 'mid' ? forkMid : paths[k];
+    const L = c.getLength();
+    const sub = k === 'mid' ? c : new THREE.CatmullRomCurve3(c.getSpacedPoints(400).filter((q, i, a) => (i / (a.length - 1)) * L > goreS(c, WIDTH * 0.62)), false, 'centripetal');
+    const g = ribbon(sub, 3.2, 1.0, 0.012);
+    const m = new THREE.Mesh(g, new THREE.ShaderMaterial({ uniforms: { uTime: uniforms.uTime, uCol: { value: new THREE.Vector3(...ARROW_COL[k]) } }, vertexShader: vert, fragmentShader: arrowFrag, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    m.renderOrder = 4; m.frustumCulled = false; group.add(m);
+  }
+
   // ---- rails: posts with amber caps, glass side panels, cyan hand-rail light, violet floor strip
   const rails = createRails(paths, tier, env);
   group.add(rails.group);
@@ -289,13 +319,16 @@ function createRails(paths, tier, env) {
   const p = new THREE.Vector3(), t = new THREE.Vector3(), sd = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const plazaAngles = [];
   // which paths & sides get rails (skip the inner edges where the three paths meet)
-  const spec = { front: [[-1, 0], [1, 0]], left: [[-1, 14], [1, 30]], mid: [[-1, 30], [1, 30]], right: [[-1, 30], [1, 14]] };
+  const trunkL = paths.mid.getLength(), forkS = (PLAZA.c.z - PLAZA.r + 0.6 - FORK_Z);
+  const gL = goreS(paths.left, WIDTH + 0.2), gR = goreS(paths.right, WIDTH + 0.2), gM = Math.max(gL, gR) + 18;
+  // [side, from s, to s]
+  const spec = { front: [[-1, 0, 700], [1, 0, 700]], mid: [[-1, 0, forkS + 4], [1, 0, forkS + 4], [-1, gM, 560], [1, gM, 560]],
+    left: [[-1, 4, 520], [1, gL + 4, 520]], right: [[1, 4, 520], [-1, gR + 4, 520]] };
   for (const [k, c] of Object.entries(paths)) {
     const L = c.getLength();
-    const maxL = k === 'front' ? 700 : 520;
-    for (const [e, s0] of spec[k]) {
+    for (const [e, s0, s1] of spec[k]) {
       const line = [];
-      for (let s = s0; s < Math.min(L, maxL); s += 1.5) {
+      for (let s = s0; s < Math.min(L, s1); s += 1.5) {
         const u = s / L; c.getPointAt(u, p); c.getTangentAt(u, t); sd.crossVectors(t, up).normalize();
         const q = p.clone().addScaledVector(sd, e * (WIDTH / 2 + 0.05));
         line.push(q);
@@ -306,7 +339,7 @@ function createRails(paths, tier, env) {
   }
   // plaza ring rail with three openings (front + three paths)
   const ring = [];
-  const openings = [0, Math.PI, Math.PI - 0.66, Math.PI + 0.66];
+  const openings = [0, Math.PI];
   const gapA = 0.42;
   let cur = [];
   for (let k = 0; k <= 360; k++) {

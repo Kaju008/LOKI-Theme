@@ -5,6 +5,7 @@ import { createMotes, createShootingStars } from '../world/space.js';
 import { createTimelineBridge, DECK_Y, PLAZA } from './bridge.js';
 import { createTree } from './tree.js';
 import { createThrone, createRocks } from './props.js';
+import { createSignpost } from './signpost.js';
 
 // =====================================================================
 //  The Universe — the Blender scene rebuilt live for the web.
@@ -41,8 +42,9 @@ export async function createUniverse(renderer, tier) {
   updaters.push((t, dt) => bridge.update(t, dt));
 
   // ---- throne, tree, rocks (exported from Blender)
-  const [throne, tree, rocks] = await Promise.all([createThrone({ env, tier }), createTree({ tier }), createRocks({ env, tier })]);
-  scene.add(throne.group, tree.group, rocks.group);
+  const [throne, tree, rocks, sign] = await Promise.all([createThrone({ env, tier }), createTree({ tier }), createRocks({ env, tier }), createSignpost({ env })]);
+  scene.add(throne.group, tree.group, rocks.group, sign.group, sign.lamp);
+  updaters.push((t, dt) => sign.update(t, dt));
   updaters.push((t, dt) => tree.update(t, dt), (t, dt) => rocks.update(t, dt));
 
   // ---- planets: Saturn behind-right, its moon on the left
@@ -144,7 +146,7 @@ export async function createUniverse(renderer, tier) {
   function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); bridge.resize(); }
 
   return {
-    scene, camera, update, resize, bridge, tree, throne, rocks, planets, sky, DECK_Y, PLAZA,
+    scene, camera, update, resize, bridge, tree, throne, rocks, planets, sky, sign, DECK_Y, PLAZA,
     setInteractive(v) { enabled = v; if (!v) document.body.dataset.hover = ''; },
     paths: bridge.paths,
   };

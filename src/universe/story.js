@@ -26,8 +26,8 @@ const KEYS = [
   { p: 0.48, pos: V(5.5, 22.5, -0.5), tgt: V(0, 24, -7), fov: 46 },   // into the crown
   { p: 0.59, pos: V(1.5, 33, -5.5), tgt: V(0, 29, -16), fov: 50 },    // over the top
   { p: 0.7, pos: V(-2.5, 28, -15), tgt: V(0, 10, -42), fov: 48 },     // turning 180°
-  { p: 0.83, pos: V(0, 21, -15.5), tgt: V(0, 4, -52), fov: 50 },    // the bridge splits in three
-  { p: 1.0, pos: V(0, 17, -16), tgt: V(0, 3.5, -48), fov: 52 },   // the three boards
+  { p: 0.83, pos: V(0, 22, -12), tgt: V(0, 3, -58), fov: 50 },     // the road forks in three
+  { p: 1.0, pos: V(0, 7.4, -22.5), tgt: V(0, 7.9, -46), fov: 50 },  // the signpost at the fork
 ];
 
 export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLanded }) {
@@ -53,12 +53,17 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
   const beats = ['b-arrive', 'b-throne', 'b-tree', 'b-paths'].map((id) => document.getElementById(id));
   const beatP = [0, 0.13, 0.36, 0.83];
   railLinks.forEach((a, k) => a.addEventListener('click', () => scrollToP(beatP[k])));
-  boards.forEach((b) => b.addEventListener('click', () => portal(+b.dataset.portal)));
+  boards.forEach((b) => {
+    b.addEventListener('click', () => portal(+b.dataset.portal));
+    b.addEventListener('pointerenter', () => uni.sign.setHover(+b.dataset.portal));
+    b.addEventListener('focus', () => uni.sign.setHover(+b.dataset.portal));
+    b.addEventListener('pointerleave', () => uni.sign.setHover(-1));
+    b.addEventListener('blur', () => uni.sign.setHover(-1));
+  });
 
   // board anchors on each path (left, mid, right)
   const anchor = (curve, s, h) => { const L = curve.getLength(); const p = curve.getPointAt(Math.min(1, s / L)); p.y += h; return p; };
   const P = uni.paths;
-  const boardAt = [anchor(P.left, 26, 3.4), anchor(P.mid, 30, 4.0), anchor(P.right, 26, 3.4)];
   const throneTop = new THREE.Vector3(0, uni.throne.top + 0.9, 0);
 
   const max = () => Math.max(1, document.documentElement.scrollHeight - innerHeight);
@@ -107,11 +112,14 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
     if (trans.active) {
       const c = trans.path, L = c.getLength(), k = trans.k;
       const s0 = 6 + k * 120;
-      c.getPointAt(Math.min(0.99, s0 / L), tmp); const a = tmp.clone(); a.y += 3.2 - k * 1.2;
+      c.getPointAt(Math.min(0.99, s0 / L), tmp); const a = tmp.clone(); a.y += 3.2 - k * 1.2 + Math.sin(Math.min(1, k * 2.2) * Math.PI) * 9;   // up over the signpost, then down the road
       c.getPointAt(Math.min(1, (s0 + 18) / L), tmp); tmp.y += 2.2;
       pos.lerp(a, smooth(Math.min(1, k * 1.6))); tgt.lerp(tmp, smooth(Math.min(1, k * 1.6)));
       fov += k * 40;
     }
+    // portrait screens: open the lens at the fork so all three roads and the signpost fit
+    const portrait = clamp((1.2 - cam.aspect) / 0.7);
+    fov *= 1 + 0.55 * portrait * seg(sp, 0.78, 0.95);
     // gentle hand-held parallax
     mouse.sx += (mouse.x - mouse.sx) * Math.min(1, dt * 2.5); mouse.sy += (mouse.y - mouse.sy) * Math.min(1, dt * 2.5);
     const dist = pos.distanceTo(tgt);
@@ -121,10 +129,10 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
     pos.y += Math.sin(t * 0.4) * 0.05;
     cam.position.copy(pos); cam.lookAt(tgt);
     if (Math.abs(cam.fov - fov) > 0.01) { cam.fov = fov; cam.updateProjectionMatrix(); }
-    dom(sp, t);
+    dom(sp, t, dt);
   }
 
-  function dom(p, t) {
+  function dom(p, t, dt = 1 / 60) {
     const landed = !fly.active && fly.k >= 1;
     const L = landed && !trans.active ? 1 : 0;
     arrive.style.opacity = (L * (1 - seg(p, 0.01, 0.05))).toFixed(3);
@@ -139,16 +147,20 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
     const qv = L * seg(p, 0.79, 0.88);
     quote.style.opacity = qv.toFixed(3);
     quote.style.filter = qv < 1 ? `blur(${((1 - qv) * 8).toFixed(1)}px)` : 'none';
-    // boards: anchored to the three paths, scaled by depth
-    const bv = L * seg(p, 0.88, 0.97);
+    // the signpost rises out of the glass; invisible buttons sit over its boards
+    const bv = L * seg(p, 0.86, 0.97);
+    const sg = uni.sign;
+    sg.state.show += ((trans.active ? 1 : bv) - sg.state.show) * Math.min(1, dt * 6);
+    sg.update(t, 0);   // apply this frame's scale before measuring the boards
     boards.forEach((b, i) => {
-      const [x, y2, z] = toScreen(boardAt[i]);
-      const d = cam.position.distanceTo(boardAt[i]);
-      const s = clamp(26 / d, 0.45, 1.25) * (0.9 + 0.1 * bv);
-      const vis = bv * (z < 1 ? 1 : 0);
-      b.classList.toggle('on', vis > 0.02);
-      b.style.opacity = vis.toFixed(3);
-      b.style.transform = `translate(${x.toFixed(1)}px, ${(y2 + (1 - bv) * 30).toFixed(1)}px) translate(-50%, -100%) scale(${s.toFixed(3)}) translateY(${(Math.sin(t * 1.1 + i * 2) * 4).toFixed(1)}px)`;
+      const on = bv > 0.6 && !trans.active;
+      b.classList.toggle('on', on);
+      if (!on) return;
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, behind = false;
+      for (const c of sg.corners(i)) { const [x, y, z] = toScreen(c); if (z > 1) behind = true; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+      if (behind) { b.classList.remove('on'); return; }
+      b.style.transform = `translate(${x0.toFixed(1)}px, ${y0.toFixed(1)}px)`;
+      b.style.width = `${(x1 - x0).toFixed(1)}px`; b.style.height = `${(y1 - y0).toFixed(1)}px`;
     });
     railFill.style.transform = `scaleY(${p.toFixed(4)})`;
     const act = p < 0.08 ? 0 : p < 0.3 ? 1 : p < 0.76 ? 2 : 3;
