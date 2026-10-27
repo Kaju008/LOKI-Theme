@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "description": "Kaju Soni \u2014 Master of Timeline. 3D scroll portfolio.",
   "scripts": {
-    "build": "esbuild src/main.js --bundle --minify --format=esm --target=es2020 --outfile=js/app.js && esbuild src/pages.js --bundle --minify --format=esm --target=es2020 --outfile=js/pages.js",
+    "build": "esbuild src/main.js --bundle --minify --format=esm --target=es2020 --outfile=js/app.js && esbuild src/legacy/main_classic.js --bundle --minify --format=esm --target=es2020 --outfile=js/classic.js && esbuild src/pages.js --bundle --minify --format=esm --target=es2020 --outfile=js/pages.js && esbuild src/pages/about.js --bundle --minify --format=esm --target=es2020 --outfile=js/about.js && esbuild src/pages/works.js --bundle --minify --format=esm --target=es2020 --outfile=js/works.js",
     "watch": "esbuild src/main.js --bundle --format=esm --target=es2020 --outfile=js/app.js --watch",
-    "serve": "python3 -m http.server 8000"
+    "serve": "python3 -m http.server 8000",
+    "build:app": "esbuild src/main.js --bundle --minify --format=esm --target=es2020 --outfile=js/app.js"
   },
   "dependencies": {
     "three": "0.186.1",

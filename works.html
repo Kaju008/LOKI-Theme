@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>My Works — Kaju Soni</title>
+  <meta name="description" content="Selected edits by Kaju Soni — explainers, brand series, films and Shorts.">
+  <meta name="theme-color" content="#020308">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/universe.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body class="page">
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="page-bg" aria-hidden="true"></div>
+  <header class="hud">
+    <a class="brand" href="./" aria-label="Kaju Soni — replay the universe"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 4h16l-6 10 6 10H8l6-10z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 14v10" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="14" r="2.2" fill="currentColor"/></svg><span>Kaju Soni</span></a>
+    <nav class="nav" aria-label="Paths"><a href="about.html" data-cut="The Timekeeper">The Timekeeper</a><a href="works.html" data-cut="My Works" class="on" aria-current="page">My Works</a><a href="lab.html" data-cut="The Lab">The Lab</a></nav>
+    <div class="hud-right">
+      <a class="xbtn sm back-uni" href="./#paths" data-cut="The Multiverse"><span>← Universe</span></a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><i></i><i></i></button>
+    </div>
+  </header>
+  <div class="menu" id="menu" hidden>
+    <a href="about.html" data-cut="The Timekeeper"><small>01</small>The Timekeeper</a><a href="works.html" data-cut="My Works"><small>02</small>My Works</a><a href="lab.html" data-cut="The Lab"><small>03</small>The Lab</a>
+    <div class="menu-x"><a class="xbtn" href="./#paths" data-cut="The Multiverse">← Universe</a><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="classic.html">Classic site</a></div>
+  </div>
+  <main class="page-main">
+    <header class="page-head" data-rise>
+      <p class="eyebrow"><span class="dot"></span>Path II · My Works</p>
+      <h1 class="h-cinzel">My Works</h1>
+      <p class="lead">Timelines I've cut — explainers, brand series, films and Shorts. Tap one to play it.</p>
+    </header>
+    <div class="filters" id="filters" role="tablist" aria-label="Filter by category" data-rise></div>
+    <section class="works" id="works" aria-label="Portfolio"></section>
+    <a class="back" href="./#paths" data-cut="The Multiverse">← Back to the three paths</a>
+  </main>
+  <footer class="page-foot">© 2026 Kaju Soni · Bengaluru · <a href="https://github.com/Kaju008/LOKI-Theme/blob/main/CREDITS.md" target="_blank" rel="noopener">Credits</a></footer>
+  <div class="player" id="player" hidden>
+    <div class="player-scrim" data-close></div>
+    <div class="player-burst" id="player-burst"></div>
+    <div class="player-card">
+      <div class="player-frame" id="player-frame"></div>
+      <div class="player-bar">
+        <button class="pbtn" id="p-prev" aria-label="Previous">←</button>
+        <div class="player-meta"><b id="p-title"></b><span id="p-cat"></span></div>
+        <a class="pbtn wide" id="p-ext" target="_blank" rel="noopener">Open ↗</a>
+        <button class="pbtn" id="p-next" aria-label="Next">→</button>
+        <button class="pbtn" data-close aria-label="Close">✕</button>
+      </div>
+    </div>
+  </div>
+  <div class="cut" id="cut" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="blade"></i><span class="cut-label">My Works</span></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="js/works.js"></script>
+</body>
+</html>

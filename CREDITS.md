@@ -8,6 +8,9 @@ Third-party imagery used in this site, with thanks:
 | Veil Nebula (`assets/space/veil*.webp`) | NASA, ESA, Hubble Heritage Team — heic1520a | CC BY 4.0 |
 | Planet surface maps and ring (`assets/space/jupiter, saturn, neptune, moon, ring`) | Solar System Scope (solarsystemscope.com/textures) | CC BY 4.0 |
 | Rock and moss PBR textures (`assets/tex/*`) | Poly Haven — rock_face_03, mossy_rock | CC0 |
+| Asteroid scans (`assets/universe/rocks.glb`) | Poly Haven — moon_rock_02, 05, 06, 07 | CC0 |
+| Throne, tree, timeline bridge (`assets/universe/*`) | Built in Blender for this site by Kaju Soni | — |
+| Draco decoder (`js/draco/*`) | Google Draco, via three.js | Apache-2.0 |
 | Fonts: Unbounded, Manrope, Cinzel, Italiana | Google Fonts / Fontsource | SIL OFL 1.1 |
 | Tool icons (Figma, Blender, Claude, Gemini, ElevenLabs) | Simple Icons | CC0 |
 

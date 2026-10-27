@@ -1,5 +1,6 @@
-// Lightweight animated starfield + menu for the extra pages (no WebGL needed)
+// Path pages: animated starfield, menu, the arrival cut and the cut back into the universe.
 const c = document.getElementById('stars');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 if (c) {
   const g = c.getContext('2d');
   let W, H, stars = [];
@@ -11,7 +12,6 @@ if (c) {
   resize(); addEventListener('resize', resize);
   let mx = 0, my = 0;
   addEventListener('pointermove', (e) => { mx = e.clientX / innerWidth - 0.5; my = e.clientY / innerHeight - 0.5; }, { passive: true });
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   (function loop(t) {
     g.clearRect(0, 0, W, H);
     for (const s of stars) {
@@ -25,3 +25,20 @@ if (c) {
 }
 const burger = document.getElementById('burger'), menu = document.getElementById('menu');
 if (burger && menu) burger.addEventListener('click', () => { const o = menu.hidden; menu.hidden = !o; burger.setAttribute('aria-expanded', String(o)); });
+
+// the cut: arriving opens the frame, leaving slices it shut
+const cut = document.getElementById('cut');
+if (cut) {
+  const label = cut.querySelector('.cut-label');
+  if (!reduce) { cut.classList.add('open'); setTimeout(() => cut.classList.remove('open'), 1700); }
+  if (location.hash === '#arrive') history.replaceState(null, '', location.pathname + location.search);
+  document.querySelectorAll('a[data-cut]').forEach((a) => a.addEventListener('click', (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || reduce) return;
+    e.preventDefault();
+    if (menu) menu.hidden = true;
+    label.textContent = a.dataset.cut || '';
+    cut.classList.remove('open'); void cut.offsetWidth; cut.classList.add('go');
+    setTimeout(() => { location.href = a.href; }, 1250);
+  }));
+  addEventListener('pageshow', (e) => { if (e.persisted) cut.classList.remove('go'); });
+}

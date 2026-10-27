@@ -258,7 +258,7 @@ export function createIntro(tier) {
   addEventListener('touchmove', onMove, { passive: true });
 
   // camera orbits the brain with the pointer (and zooms in a touch toward the centre)
-  const state = { spin: 1, orbit: 1, dist: 4.7, angle: 0, lookZ: 0 };
+  const state = { spin: 1, orbit: 1, dist: 4.7, angle: 0, lookZ: 0, lift: 0 };
   const m = { x: 0, y: 0, sx: 0, sy: 0 };
   const onPM = (e) => { const pt = e.touches ? e.touches[0] : e; m.x = pt.clientX / innerWidth - 0.5; m.y = pt.clientY / innerHeight - 0.5; };
   addEventListener('pointermove', onPM, { passive: true });
@@ -270,7 +270,7 @@ export function createIntro(tier) {
     const zoom = 1 - (1 - Math.min(1, Math.hypot(m.sx, m.sy) * 2.2)) * 0.07 * state.orbit;
     const R = state.dist * zoom;
     camera.position.set(Math.sin(az) * Math.cos(el) * R, 0.05 + Math.sin(el) * R, Math.cos(az) * Math.cos(el) * R);
-    camera.lookAt(0, 0, state.lookZ);
+    camera.lookAt(0, -state.lift * Math.min(1, state.dist / 4.7) ** 2, state.lookZ);
     starPts.rotation.y = t * 0.004;
     state.angle += dt * 0.16 * state.spin;
     brainGroup.rotation.y = state.angle + Math.sin(t * 0.5) * 0.18;
