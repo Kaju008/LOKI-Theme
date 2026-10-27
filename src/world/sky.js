@@ -25,7 +25,7 @@ export async function createSky(renderer, tier, loader) {
   tilt.rotation.set(0.08, 0, 0.42);
   group.add(tilt);
 
-  const skyU = { uSky: { value: tex }, uGain: { value: 0.78 }, uLift: { value: 0.0 } };
+  const skyU = { uSky: { value: tex }, uGain: { value: 0.5 }, uLift: { value: 0.0 } };
   const skyMat = new THREE.ShaderMaterial({
     uniforms: skyU, side: THREE.BackSide, depthWrite: false, depthTest: false,
     vertexShader: `varying vec3 vDir; void main(){ vDir=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); gl_Position.z=gl_Position.w; }`,

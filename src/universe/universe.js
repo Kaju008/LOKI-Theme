@@ -6,6 +6,7 @@ import { createTimelineBridge, DECK_Y, PLAZA } from './bridge.js';
 import { createTree } from './tree.js';
 import { createThrone, createRocks } from './props.js';
 import { createSignpost } from './signpost.js';
+import { createAtmosphere } from './atmos.js';
 
 // =====================================================================
 //  The Universe — the Blender scene rebuilt live for the web.
@@ -23,6 +24,8 @@ export async function createUniverse(renderer, tier) {
   scene.add(sky.group);
   scene.environment = env; scene.environmentIntensity = 0.45;
   scene.background = new THREE.Color(0x000000);
+  // depth: distant objects sink into a deep blue haze
+  scene.fog = new THREE.FogExp2(0x03060c, 0.0052);
 
   // ---- light: soft warm key on the throne, subtle teal rim, the tree's own green-gold glow
   scene.add(new THREE.HemisphereLight(0x2c3a5c, 0x05060a, 0.55));
@@ -59,6 +62,10 @@ export async function createUniverse(renderer, tier) {
   moon.axis.traverse((o) => { if (o.material && o.material.uniforms && o.material.uniforms.uSun) o.material.uniforms.uSun.value = SAT_SUN; });
   const planets = [saturn, moon];
   planets.forEach((p) => { scene.add(p.group); p.home = p.group.position.clone(); updaters.push((t, dt) => p.update(t, dt)); });
+
+  // ---- clouds, mist and haze
+  const atmos = createAtmosphere(tier); scene.add(atmos.group);
+  updaters.push((t) => atmos.update(t));
 
   // ---- dust + shooting stars
   const motes = createMotes(tier); scene.add(motes.object);
@@ -146,7 +153,7 @@ export async function createUniverse(renderer, tier) {
   function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); bridge.resize(); }
 
   return {
-    scene, camera, update, resize, bridge, tree, throne, rocks, planets, sky, sign, DECK_Y, PLAZA,
+    scene, camera, update, resize, bridge, tree, throne, rocks, planets, sky, sign, atmos, DECK_Y, PLAZA,
     setInteractive(v) { enabled = v; if (!v) document.body.dataset.hover = ''; },
     paths: bridge.paths,
   };

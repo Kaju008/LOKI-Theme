@@ -70,6 +70,18 @@ export async function createRocks({ env, tier, base = 'assets/universe/' }) {
     [3, [-26, 2, 2], 0.7, 0.5, 0], [1, [30, 15, -40], 2.6, 0.8, 0.3], [2, [-38, 18, -48], 3.2, 0.8, 0], [0, [-4, 14, 14], 0.22, 0.0, 0],
     [3, [5.5, 12.5, 6], 0.18, 0.0, 0], [1, [-15, 22, -2], 0.45, 0.4, 0],
   ];
+  // a wider field drifting beside the bridge, around the fork and down into the clouds
+  // (kept clear of the camera's flight path along the middle)
+  let sd = 11; const R = () => ((sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const extra = tier.mobile ? 14 : 28;
+  for (let i = 0, tries = 0; i < extra && tries < 400; tries++) {
+    const side = R() < 0.5 ? -1 : 1;
+    const x = side * (16 + R() * 60), y = -14 + R() * 44, z = 70 - R() * 190;
+    if (Math.abs(x) < 20 && y > -2 && z > -60 && z < 50) continue;     // stay out of the story camera's way
+    const far = Math.abs(x) > 40 || y < -4;
+    L.push([i % 4, [x, y, z], far ? 1.4 + R() * 3.2 : 0.35 + R() * 1.4, R() < 0.55 ? 0.5 + R() * 0.5 : 0.1, R() < 0.3 ? 0.6 : 0]);
+    i++;
+  }
   L.forEach(([k, p, s, glow, amber], i) => {
     const sm = src[k % src.length];
     const mesh = new THREE.Mesh(sm.geometry, mk(sm, i * 0.37 + 0.1, glow, amber));
