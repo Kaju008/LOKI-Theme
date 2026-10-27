@@ -10,7 +10,7 @@
 .slider.thin .slider-track .sweep { position: absolute; top: -10px; bottom: -10px; width: 90px; left: -90px; pointer-events: none;
   background: radial-gradient(closest-side, rgba(255,255,255,.75), rgba(160,240,255,.25) 40%, transparent 70%); filter: blur(2px); mix-blend-mode: screen; animation: tsweep 3.4s cubic-bezier(.5,0,.3,1) infinite; opacity: calc(1 - var(--v) * 2); }
 @keyframes tsweep { 0% { left: -90px; } 70%, 100% { left: calc(100% + 10px); } }
-.slider.thin .slider-label { padding-left: 0; top: auto; bottom: -26px; height: auto; font: 400 10px/1 var(--f-display); letter-spacing: .5em; text-indent: .5em; }
+.slider.thin .slider-label { padding-left: 0; top: auto; bottom: -30px; height: auto; padding-block: 8px; pointer-events: auto; cursor: pointer; font: 400 10px/1 var(--f-display); letter-spacing: .5em; text-indent: .5em; }
 .slider.thin .slider-arrow { position: absolute; right: -2px; top: 50%; transform: translateY(-52%); font: 300 14px/1 var(--f-display); color: rgba(255,255,255,.35); animation: nudge 1.8s infinite; opacity: calc(1 - var(--v) * 3); }
 @keyframes nudge { 50% { transform: translate(4px, -52%); color: rgba(255,255,255,.8); } }
 .slider.thin .slider-knob { top: 50%; left: calc(var(--v) * (100% - 46px)); width: 46px; height: 46px; margin-top: -23px; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.14), rgba(255,255,255,.02) 60%, transparent 70%); border: 0; box-shadow: none; }

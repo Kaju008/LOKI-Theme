@@ -50,29 +50,52 @@ const setV = (x) => { v = clamp(x); slider.style.setProperty('--v', v.toFixed(4)
 setV(0);
 slider.classList.add('ready');
 const posToV = (cx) => { const r = slider.getBoundingClientRect(); return (cx - r.left - 23) / (r.width - 46); };
-slider.addEventListener('pointerdown', (e) => { if (started) return; dragging = true; slider.setPointerCapture(e.pointerId); slider.classList.add('grab'); setV(posToV(e.clientX)); });
-slider.addEventListener('pointermove', (e) => { if (dragging) { setV(posToV(e.clientX)); if (v >= 0.985) { dragging = false; begin(); } } });
+let downX = 0, moved = false, auto = false;
+// finish the slide by itself (a tap, a click on the words, the keyboard, or a slide that's most of the way)
+const finish = (dur = 0.9) => {
+  if (started || auto) return; auto = true; dragging = false; slider.classList.remove('grab');
+  gsap.to({ x: v }, { x: 1, duration: dur * (1 - v) + 0.15, ease: 'power2.inOut', onUpdate() { setV(this.targets()[0].x); }, onComplete: begin });
+};
+slider.addEventListener('pointerdown', (e) => {
+  if (started || auto) return;
+  dragging = true; moved = false; downX = e.clientX;
+  try { slider.setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
+  slider.classList.add('grab');
+});
+slider.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  if (Math.abs(e.clientX - downX) > 6) moved = true;
+  if (moved) { setV(posToV(e.clientX)); if (v >= 0.985) finish(0.2); }
+});
 const release = () => {
   if (!dragging) return; dragging = false; slider.classList.remove('grab');
-  if (v > 0.75) gsap.to({ x: v }, { x: 1, duration: 0.25, onUpdate() { setV(this.targets()[0].x); }, onComplete: begin });
+  if (!moved || v > 0.6) finish(0.6);                                   // a tap anywhere on the slider unleashes it
   else gsap.to({ x: v }, { x: 0, duration: 0.7, ease: 'elastic.out(1,0.6)', onUpdate() { setV(this.targets()[0].x); } });
 };
 addEventListener('pointerup', release);
-slider.addEventListener('pointercancel', release);
-slider.addEventListener('keydown', (e) => { if (['Enter', ' ', 'ArrowRight'].includes(e.key)) { e.preventDefault(); gsap.to({ x: v }, { x: 1, duration: 0.5, onUpdate() { setV(this.targets()[0].x); }, onComplete: begin }); } });
-slider.addEventListener('click', () => { if (!started && v < 0.05 && !dragging) gsap.to({ x: 0 }, { x: 1, duration: 0.9, ease: 'power2.inOut', onUpdate() { setV(this.targets()[0].x); }, onComplete: begin }); });
+slider.addEventListener('pointercancel', () => { if (dragging && moved && v > 0.6) finish(0.4); else { dragging = false; slider.classList.remove('grab'); } });
+slider.addEventListener('keydown', (e) => { if (['Enter', ' ', 'ArrowRight'].includes(e.key)) { e.preventDefault(); finish(0.6); } });
 $('#skip').addEventListener('click', () => begin(true));
 $('#replay').addEventListener('click', () => { sessionStorage.removeItem('kaju-skip'); scrollTo(0, 0); location.reload(); });
 const burger = $('#burger'), menu = $('#menu');
 burger.addEventListener('click', () => { const o = menu.hidden; menu.hidden = !o; burger.setAttribute('aria-expanded', String(o)); });
+
+function failed(e) {
+  console.error('universe failed to load', e);
+  const cap = $('#intro-caption');
+  cap.innerHTML = '<span>The universe could not open in this browser.</span><b><a href="classic.html" style="text-decoration:underline">Enter the classic site →</a></b>';
+  cap.classList.add('on'); cap.style.pointerEvents = 'auto';
+}
 
 // The thought spins up, bursts into particles, the camera dives into a wormhole…
 async function begin(skip = false) {
   if (started) return; started = true;
   $('#gate').classList.add('out');
   if (skip || reduce || !core) {
-    final.uniforms.uFade.value = 1;
-    const w = await ready; await prewarm(w);
+    if (final) final.uniforms.uFade.value = 1;
+    let w;
+    try { w = await ready; } catch (e) { return failed(e); }
+    await prewarm(w);
     enterUniverse(true);
     return;
   }
@@ -93,7 +116,8 @@ async function begin(skip = false) {
     .to(final.uniforms.uCA, { value: 0.009, duration: 1.4 }, 2.3)
     .add(() => cap.classList.add('on'), 3.1);
   await tl.then();
-  const w = await ready;
+  let w;
+  try { w = await ready; } catch (e) { return failed(e); }
   await Promise.all([prewarm(w), wait(1500)]);                                       // …deep through the galaxies
   enterUniverse(false);
   const ex = gsap.timeline();
