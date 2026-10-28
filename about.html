@@ -7,11 +7,15 @@
   <meta name="description" content="About Kaju Soni — video editor, motion designer and AI filmmaker from Bengaluru.">
   <meta name="theme-color" content="#020308">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+  <script>(function(){try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('anim')}catch(e){}})();</script>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/universe.css">
   <link rel="stylesheet" href="css/pages.css">
 </head>
-<body class="page">
+<body class="page about-body">
   <canvas id="stars" aria-hidden="true"></canvas>
   <div class="page-bg" aria-hidden="true"></div>
   <header class="hud">
@@ -26,11 +30,30 @@
     <a href="about.html" data-cut="The Timekeeper"><small>01</small>The Timekeeper</a><a href="works.html" data-cut="My Works"><small>02</small>My Works</a><a href="lab.html" data-cut="The Lab"><small>03</small>The Lab</a>
     <div class="menu-x"><a class="xbtn" href="./#paths" data-cut="The Multiverse">← Universe</a><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="classic.html">Classic site</a></div>
   </div>
-  <main class="page-main">
+  <section class="ah" id="ah" aria-label="About Kaju Soni">
+    <div class="ah-sky" id="ah-sky" aria-hidden="true"></div>
+    <div class="ah-copy">
+      <div class="ah-col ah-eyebrow"><span class="ent-mask"><span class="ent-line">The Timekeeper</span></span></div>
+      <h1 class="ah-col ah-title"><span class="ent-mask"><span class="ent-line" id="ah-name">Editor</span></span></h1>
+      <div class="ah-col ah-rule"><span></span></div>
+      <p class="ah-col ah-lede" id="ah-lede"></p>
+      <div class="ah-col ah-cta">
+        <button class="ah-planet ah-planet-l" type="button" data-slot="l"></button>
+        <button class="ah-planet ah-planet-r" type="button" data-slot="r"></button>
+        <a href="#say-hi">Say hello</a>
+        <span class="ah-label ah-label-l"></span>
+        <span class="ah-label ah-label-r"></span>
+      </div>
+    </div>
+    <button class="ah-scroll" type="button" aria-label="Scroll to my story">
+      <svg viewBox="0 0 26 33" fill="none" aria-hidden="true"><path d="M13 1.5 V31.5 M1.9 20.4 L13 31.5 L24.1 20.4" stroke="#ffffff" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+    </button>
+  </section>
+  <main class="page-main about-main" id="story">
     <section class="tk" aria-label="About me">
       <div class="tk-copy" data-rise>
-        <p class="eyebrow"><span class="dot"></span>Path I · The Timekeeper</p>
-        <h1 class="h-cinzel">The <br>Timekeeper</h1>
+        <p class="eyebrow"><span class="dot"></span>Path I · The story</p>
+        <h2 class="h-cinzel">The <br>Timekeeper</h2>
         <p class="tk-sub" id="about-title"></p>
         <div class="rule"><i></i></div>
         <div class="tk-body" id="about-body"></div>

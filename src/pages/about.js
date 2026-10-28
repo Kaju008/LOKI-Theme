@@ -1,6 +1,9 @@
 import '../pages.js';
 import { SITE, ABOUT, TOOLS } from '../config.js';
 import { $, initContact, rise } from './common.js';
+import { initAboutHero } from './about-hero.js';
+
+initAboutHero();
 
 $('#about-title').textContent = ABOUT.title;
 $('#about-body').innerHTML = ABOUT.body.map((p) => `<p>${p}</p>`).join('');

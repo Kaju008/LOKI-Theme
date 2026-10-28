@@ -47,6 +47,21 @@ export const WORKS = [
 ];
 
 export const ABOUT = {
+  // The About hero: three worlds, one for each side of the work. Click a side planet to switch.
+  // planet: texture in assets/space · tint: CSS filter for the planet · img: a transparent cut-out of me
+  // head: where my face sits in the image (x, y as 0–1) · size: image height in screen heights
+  // video: optional full-bleed clip (assets/about/*.mp4) that replaces the planet + cut-out when set
+  worlds: [
+    { key: 'editor', name: 'Editor', planet: 'assets/space/jupiter.webp', tint: 'saturate(.9) brightness(1.05)', glow: '#f1c27a',
+      img: 'assets/img/me-think.webp', head: [0.56, 0.26], size: 0.78, video: null,
+      lede: 'Eight years of bending timelines for newsrooms, edtech, healthcare and fintech. I find the story in the footage and cut it so people keep watching.' },
+    { key: 'motion', name: 'Motion', planet: 'assets/space/neptune.webp', tint: 'saturate(1.25) brightness(1.1)', glow: '#6fc8ff',
+      img: 'assets/hero/gate.webp', head: [0.52, 0.07], size: 1.18, video: null,
+      lede: 'Type that moves, graphics that explain, worlds built in After Effects and Blender. Motion is how I make ideas land in seconds.' },
+    { key: 'filmmaker', name: 'Filmmaker', planet: 'assets/space/neptune.webp', tint: 'hue-rotate(58deg) saturate(1.3) brightness(1.05)', glow: '#b49bff',
+      img: 'assets/hero/throne.webp', head: [0.475, 0.215], size: 1.12, video: null,
+      lede: 'Story, character sheets, shot-by-shot generation, voice, then the final cut in Premiere. AI is now part of how I make films.' },
+  ],
   kicker: 'The Timekeeper',
   title: 'About Me',
   body: [
