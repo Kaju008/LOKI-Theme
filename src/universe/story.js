@@ -1,4 +1,5 @@
-import { arcOnScreen, arcPath } from '../core/arc.js';
+import { arcOnScreen } from '../core/arc.js';
+import { createFlash } from '../core/flash.js';
 import * as THREE from 'three';
 import { createForeground } from './foreground.js';
 
@@ -247,7 +248,19 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
       if (hold.p >= 1) startShift();
     }
     // portal flight down a path
-    if (trans.active) {
+    if (trans.active && trans.low) {
+      // The Timekeeper: drop to the glass and skim the timeline, faster and faster… then whip straight up
+      const c = trans.path, L = c.getLength(), k = trans.k;
+      const s0 = 4 + Math.pow(k, 1.7) * 170;
+      c.getPointAt(Math.min(0.99, s0 / L), tmp); const a = tmp.clone();
+      const rise = smooth(clamp((k - 0.62) / 0.24));
+      a.y += 0.55 + Math.pow(rise, 2) * 26;
+      c.getPointAt(Math.min(1, (s0 + 16) / L), tmp); tmp.y += 0.35 + rise * 70;
+      const d = smooth(Math.min(1, k * 3.2));
+      pos.lerp(a, d); tgt.lerp(tmp, d);
+      fov += d * 34 - rise * 10;
+      pos.x += (Math.random() - 0.5) * k * 0.08; pos.y += (Math.random() - 0.5) * k * 0.05;   // speed shake
+    } else if (trans.active) {
       const c = trans.path, L = c.getLength(), k = trans.k;
       const s0 = 6 + k * 120;
       c.getPointAt(Math.min(0.99, s0 / L), tmp); const a = tmp.clone(); a.y += 3.2 - k * 1.2 + Math.sin(Math.min(1, k * 2.2) * Math.PI) * 9;   // up over the signpost, then down the road
@@ -340,32 +353,34 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
     if (sp < 0.86) { scrollToP(1, 1.6); setTimeout(go, 1700); } else go();
   }
 
-  // The Timekeeper: race down the timeline; the road's light gathers into one ray, the world goes dark around it,
-  // and the ray bends into the exact arc of the sword's cut that opens the About page (~2.1 s here, ~1.2 s there).
+  // The Timekeeper (~1.9 s here): skim the timeline, whip up; the road's light becomes one white-hot streak that bends
+  // into the sword's arc, and the frame burns out to white. The About page picks up from that white.
   function timekeeper(page) {
-    const el = document.getElementById('slash-out'), svg = el.querySelector('svg'), dark = el.querySelector('.dark');
-    const paths = [...el.querySelectorAll('path')];
+    trans.low = true;
+    const el = document.getElementById('slash-out'), fl = createFlash(el.querySelector('canvas'));
     const W = innerWidth, H = innerHeight;
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     const to = arcOnScreen(W, H);
-    const from = to.map((_, k) => [W * 0.5, H + 30 - (H * 0.5 + 30) * (k / (to.length - 1))]);   // straight up the road to its vanishing point
-    const r = { draw: 0, bend: 0, dark: 0 };
+    const from = to.map((_, k) => { const u = k / (to.length - 1); return [W * (0.5 + 0.02 * Math.sin(u * 3)), H + 40 - (H * 0.56 + 40) * u]; });   // the road, from under the lens to the horizon
+    const r = { head: 0, heat: 0, bend: 0, white: 0, spark: 0 };
+    const scene = [...document.querySelectorAll('canvas')].filter((c) => !el.contains(c));
     const paint = () => {
-      const e = r.bend;
-      const pts = from.map((p, k) => [p[0] + (to[k][0] - p[0]) * e, p[1] + (to[k][1] - p[1]) * e]);
-      const d = arcPath(pts);
-      paths.forEach((p) => { p.setAttribute('d', d); p.style.strokeDashoffset = (1 - r.draw).toFixed(4); });
-      dark.style.opacity = r.dark.toFixed(3);
+      fl.render({ from, to, bend: r.bend, head: r.head, tail: 0, heat: r.heat, white: r.white * r.white, spark: r.spark });
+      // the scene itself blows out under the light (real exposure, not a grey veil)
+      const ex = r.heat > 0.6 ? (r.heat - 0.6) * 0.8 + r.white * 9 : 0;
+      scene.forEach((c) => { c.style.filter = ex > 0.01 ? `brightness(${(1 + ex).toFixed(2)}) saturate(${Math.max(0, 1 - ex * 0.15).toFixed(2)})` : ''; });
     };
-    paint(); el.classList.add('on');
+    el.classList.add('on'); paint();
     gsap.timeline({ onUpdate: paint })
-      .to(trans, { k: 1, duration: 2.0, ease: 'power2.in' }, 0)
-      .to(B.uSpeed, { value: 110, duration: 1.6, ease: 'power3.in' }, 0)
-      .to(final.uniforms.uCA, { value: 0.01, duration: 1.2, ease: 'power2.in' }, 0.3)
-      .to(r, { draw: 1, duration: 0.4, ease: 'power2.out' }, 0.45)
-      .to(r, { dark: 1, duration: 0.65, ease: 'power2.in' }, 0.75)
-      .to(r, { bend: 1, duration: 0.6, ease: 'power3.inOut' }, 1.25)
-      .add(() => { location.href = page.href + '#slash'; }, 1.95);
+      .to(trans, { k: 1, duration: 1.9, ease: 'power1.in' }, 0)
+      .to(B.uSpeed, { value: 140, duration: 1.3, ease: 'power3.in' }, 0)
+      .to(final.uniforms.uCA, { value: 0.014, duration: 1.2, ease: 'power2.in' }, 0.3)
+      .to(r, { head: 1, duration: 0.42, ease: 'power2.inOut' }, 0.62)      // the timeline ignites, racing away from the lens
+      .to(r, { heat: 0.55, duration: 0.4, ease: 'power2.out' }, 0.62)
+      .to(r, { spark: 1, duration: 0.3 }, 0.7)
+      .to(r, { bend: 1, duration: 0.5, ease: 'power3.inOut' }, 1.1)        // as the camera whips up, the streak bends into the arc
+      .to(r, { heat: 1.25, duration: 0.45, ease: 'power2.in' }, 1.15)
+      .to(r, { white: 1, duration: 0.32, ease: 'expo.in' }, 1.52)          // and the light swallows the frame
+      .add(() => { location.href = page.href + '#slash'; }, 1.9);
   }
 
   return { land, update, portal, shift: startShift, wipeTo, world, resize() {}, state: { fly, trans, shift, hold }, get sp() { return sp; }, set sp(v) { sp = v; } };

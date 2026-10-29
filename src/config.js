@@ -77,27 +77,31 @@ export const ABOUT = {
   ],
 };
 
+// The training hall (About page). Each tool is a token you slice.
+// m: the two-letter mark (or icon: an SVG in assets/icons) · bg/fg: token colours · lv: mastery 1–5
+// say: one line on how I use it · use: what it's for
 export const TOOLS = {
   craft: [
-    { n: 'Premiere Pro', m: 'Pr', c: '#9999ff', d: 'Edit · 8 yrs' },
-    { n: 'After Effects', m: 'Ae', c: '#9999ff', d: 'Motion · VFX' },
-    { n: 'Photoshop', m: 'Ps', c: '#31a8ff', d: 'Thumbnails · Comp' },
-    { n: 'Illustrator', m: 'Ai', c: '#ff9a00', d: 'Vector · Brand' },
-    { n: 'Audition', m: 'Au', c: '#00e4bb', d: 'Sound design' },
-    { n: 'Figma', icon: 'assets/icons/figma.svg', c: '#a259ff', d: 'Storyboards' },
-    { n: 'Blender', icon: 'assets/icons/blender.svg', c: '#f5792a', d: '3D · Scenes' },
-    { n: 'Element 3D', m: 'E3D', c: '#7cf2c4', d: '3D in AE' },
+    { n: 'Premiere Pro', m: 'Pr', bg: '#2a0634', fg: '#ea77ff', lv: 5, say: 'Where every story gets its rhythm — the first tool I open and the last I close.', use: ['Long-form', 'Shorts & Reels', 'Ads'] },
+    { n: 'After Effects', m: 'Ae', bg: '#1d0b3d', fg: '#c79bff', lv: 5, say: 'Motion graphics, kinetic type, compositing and the occasional impossible shot.', use: ['Motion design', 'VFX', 'Explainers'] },
+    { n: 'Photoshop', m: 'Ps', bg: '#001e36', fg: '#31a8ff', lv: 4, say: 'Thumbnails that earn the click, composites and key art.', use: ['Thumbnails', 'Compositing', 'Key art'] },
+    { n: 'Illustrator', m: 'Ai', bg: '#2e0f00', fg: '#ff9a00', lv: 4, say: 'Vectors, icons and brand systems ready to animate.', use: ['Icons', 'Brand assets', 'Infographics'] },
+    { n: 'Audition', m: 'Au', bg: '#00302a', fg: '#00e4bb', lv: 4, say: 'Clean dialogue, sound design and the mix that makes it feel finished.', use: ['Dialogue', 'Sound design', 'Mixing'] },
+    { n: 'Figma', icon: 'assets/icons/figma.svg', bg: '#151515', fg: '#a259ff', lv: 3, say: 'Storyboards, layouts and shot planning before a single frame is cut.', use: ['Storyboards', 'Layouts', 'Pitch decks'] },
+    { n: 'Blender', icon: 'assets/icons/blender.svg', bg: '#13202e', fg: '#f5792a', lv: 3, say: '3D scenes and worlds — like the universe you just walked through.', use: ['3D scenes', 'Product shots', 'Worlds'] },
+    { n: 'Element 3D', m: 'E3D', bg: '#082a22', fg: '#7cf2c4', lv: 4, say: 'Fast 3D right inside After Effects.', use: ['3D titles', 'Logo reveals'] },
   ],
   ai: [
-    { n: 'Claude Code', icon: 'assets/icons/claude.svg', c: '#d97757', d: 'Build · Automate' },
-    { n: 'Google Antigravity', m: 'AG', c: '#7aa2ff', d: 'Agentic dev' },
-    { n: 'Gemini · Nano Banana', icon: 'assets/icons/googlegemini.svg', c: '#8ab4ff', d: 'Image gen' },
-    { n: 'Veo', m: 'Veo', c: '#6be4ff', d: 'Video gen' },
-    { n: 'Higgsfield', m: 'Hf', c: '#c6ff5a', d: 'Cinematic AI' },
-    { n: 'Magnific AI', m: 'Mg', c: '#ff6ad5', d: 'Upscale' },
-    { n: 'ElevenLabs', icon: 'assets/icons/elevenlabs.svg', c: '#ffffff', d: 'Voice' },
+    { n: 'Claude Code', icon: 'assets/icons/claude.svg', bg: '#2a160f', fg: '#e08a66', lv: 4, say: 'Building my own tools — like a thumbnail maker that took an hour down to minutes.', use: ['Automation', 'Tools', 'This website'] },
+    { n: 'Google Antigravity', m: 'AG', bg: '#0b1736', fg: '#7aa2ff', lv: 4, say: 'Agentic development for pipelines and prototypes.', use: ['Prototypes', 'Pipelines'] },
+    { n: 'Gemini · Nano Banana', icon: 'assets/icons/googlegemini.svg', bg: '#0c1a33', fg: '#8ab4ff', lv: 4, say: 'Image generation and edits for character sheets and key frames.', use: ['Character sheets', 'Key frames'] },
+    { n: 'Veo', m: 'Veo', bg: '#06222b', fg: '#6be4ff', lv: 4, say: 'Shot-by-shot AI video, directed like a real shoot.', use: ['AI films', 'B-roll'] },
+    { n: 'Higgsfield', m: 'Hf', bg: '#111a05', fg: '#c6ff5a', lv: 3, say: 'Cinematic camera motion for performance ads.', use: ['Performance ads', 'Motion'] },
+    { n: 'Magnific AI', m: 'Mg', bg: '#2a0a24', fg: '#ff6ad5', lv: 3, say: 'Upscaling and detail for anything that has to look premium.', use: ['Upscale', 'Detail'] },
+    { n: 'ElevenLabs', icon: 'assets/icons/elevenlabs.svg', bg: '#141414', fg: '#f2f2f2', lv: 4, say: 'Voices and narration for AI films and explainers.', use: ['Voice-over', 'Narration'] },
   ],
 };
+for (const t of [...TOOLS.craft, ...TOOLS.ai]) t.c = t.fg;   // older pages read .c
 
 // The Reel page (reel.html): curved panels gliding over a live editing timeline.
 // speed: how fast it rolls — 1 (slow) … 2.5 (brisk). ~14 s per video at 1, ~6 s at 2.5.
@@ -110,4 +114,20 @@ export const REEL = {
   title: 'Every cut, in motion.',
   kicker: 'The Reel · always rolling',
   sub: 'A live timeline of my edits. Watch it roll — or click any frame to play it.',
+};
+
+// The journey game (About page). One stop per company, in order. Each stop is a ?-block: hit it from below,
+// drink the filter coffee, level up. title/years/note show on the level-up card — edit them freely.
+// theme: the art style the world turns into after that level-up (see src/pages/journey/world.js)
+export const JOURNEY = {
+  hello: ["Hi, I'm Kaju!", 'Press START to play through my journey.'],
+  stops: [
+    { company: 'VIP News Karnataka', short: 'VIP NEWS', years: 'Jul 2017 – Jan 2018', title: 'Video Editor', note: 'First newsroom. Cutting stories against the clock.', color: '#d7262e', theme: 'press' },
+    { company: 'Indradhanush News', short: 'INDRADHANUSH', years: 'Jan – Jun 2018', title: 'Video Editor', note: 'Daily bulletins, faster cuts, more colour.', color: '#7b4dff', theme: 'rainbow' },
+    { company: 'LearnCab', short: 'LEARNCAB', years: 'Oct 2018 – Jun 2020', title: 'Video Editor & Motion Designer', note: 'Edtech — explaining hard things simply.', color: '#1f7ae0', theme: 'notebook' },
+    { company: 'Vedantu', short: 'VEDANTU', years: 'Jul 2020 – Dec 2022', title: 'Graphic & Motion Designer', note: 'A channel that crossed 1M+ subscribers.', color: '#f47c20', theme: 'sunset' },
+    { company: 'Mojocare', short: 'MOJOCARE', years: 'Dec 2022 – Jun 2023', title: 'Video Editor · Motion', note: 'Healthcare stories with care and clarity.', color: '#12a58c', theme: 'clinic' },
+    { company: 'Angel One', short: 'ANGEL ONE', years: 'Feb 2024 – Sep 2026', title: 'Manager – Video Editor', note: 'Led the video team: 35–40 pieces a month, retention up to 50.8%.', color: '#3b5bfd', theme: 'markets' },
+  ],
+  next: { title: 'For my next level — let’s build together.', sub: 'Whichever team you’re from, I’d love to hear what you’re making.' },
 };

@@ -5,6 +5,8 @@
 @font-face { font-family: 'Unbounded'; src: url(../assets/fonts/unbounded-latin-500-normal.woff2) format('woff2'); font-weight: 500; font-display: swap; }
 @font-face { font-family: 'Unbounded'; src: url(../assets/fonts/unbounded-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: swap; }
 @font-face { font-family: 'Unbounded'; src: url(../assets/fonts/unbounded-latin-800-normal.woff2) format('woff2'); font-weight: 800; font-display: swap; }
+@font-face { font-family: 'Unbounded'; src: url(../assets/fonts/unbounded-latin-900-normal.woff2) format('woff2'); font-weight: 900; font-display: swap; }
+@font-face { font-family: 'Press Start 2P'; src: url(../assets/fonts/press-start-2p-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Manrope'; src: url(../assets/fonts/manrope-latin-300-normal.woff2) format('woff2'); font-weight: 300; font-display: swap; }
 @font-face { font-family: 'Manrope'; src: url(../assets/fonts/manrope-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Manrope'; src: url(../assets/fonts/manrope-latin-500-normal.woff2) format('woff2'); font-weight: 500; font-display: swap; }

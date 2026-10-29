@@ -126,11 +126,7 @@ body.shifting .hold, body.shifting #mot { visibility: hidden; }
 @media (max-width: 700px) { .fg-cloud { width: 56vw; } }
 body.leaving .fg, body.shifting .fg { opacity: 0 !important; }
 
-/* the Timekeeper portal: the rushing timeline becomes one ray of light, which bends into the sword's arc */
+/* the Timekeeper portal: the timeline becomes one white-hot streak and the frame burns out to white */
 .slash-out { position: fixed; inset: 0; z-index: 90; pointer-events: none; visibility: hidden; }
 .slash-out.on { visibility: visible; }
-.slash-out .dark { position: absolute; inset: 0; background: #05070b; opacity: 0; }
-.slash-out svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.slash-out path { fill: none; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
-.slash-out .glow { stroke: #ffb35a; stroke-width: 18px; opacity: .7; filter: blur(7px); }
-.slash-out .core { stroke: #fffaf0; stroke-width: 3px; filter: drop-shadow(0 0 6px #ffe2a8) drop-shadow(0 0 18px #ff9a3c); }
+.slash-out canvas { position: absolute; inset: 0; width: 100%; height: 100%; }

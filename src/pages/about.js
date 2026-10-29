@@ -3,9 +3,12 @@
 // closes in on him and "The Maker" rises on the left. Then the training hall, where the
 // tools fly at him and he cuts them down one by one, the journey panel and the contact form.
 import '../pages.js';
-import { SITE, ABOUT, TOOLS } from '../config.js';
+import { SITE, ABOUT } from '../config.js';
 import { $, $$, initContact } from './common.js';
 import { filmRect, arcOnScreen } from '../core/arc.js';
+import { createFlash } from '../core/flash.js';
+import { initArena } from './arena.js';
+import { initJourney } from './journey/game.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -59,25 +62,34 @@ function drawFilm(f, k = 0) {
 }
 
 // ---------------------------------------------------------------- the cut-open entrance
-// The ray the universe left on screen sits exactly on the sword's arc in the first frame: it flares,
-// the dark splits apart along it, and the ray hands over to the arc in the shot.
-const slash = $('#slash-in');
-const STILL = new URLSearchParams(location.search).has('still');
+// The page arrives burnt out to white, exactly as the universe left it. The streak flares along the sword's arc,
+// the white is cut in two and parts along it, the exposure settles, and the arc in the shot takes over.
+const slash = $('#slash-in'), filmEl = $('#wr-film');
+const STILL = new URLSearchParams(location.search).get('still');     // ?still=0.3 freezes the entrance at 0.3 s (for checking)
 let auto = reduce ? FILM.hold : 0, autoOn = false;
 const open = () => { document.body.classList.add('opened'); autoOn = true; };
 if (reduce) { slash.style.display = 'none'; document.body.classList.add('opened'); }
 else {
-  const P = arcOnScreen(innerWidth, innerHeight), mid = P[4];
-  slash.style.setProperty('--fx', `${(mid[0] / innerWidth * 100).toFixed(1)}%`);
-  slash.style.setProperty('--fy', `${(mid[1] / innerHeight * 100).toFixed(1)}%`);
-  const o = { duration: 900, delay: 260, easing: 'cubic-bezier(.7,0,.15,1)', fill: 'forwards' };
-  $('.flash', slash).animate([{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }], { duration: 700, delay: 60, easing: 'ease-out', fill: 'forwards' });
-  $('.glow', slash).animate([{ strokeWidth: '18px', opacity: 0.7 }, { strokeWidth: '70px', opacity: 1, offset: 0.35 }, { strokeWidth: '30px', opacity: 0 }], { duration: 1100, delay: 40, easing: 'ease-out', fill: 'forwards' });
-  $('.core', slash).animate([{ opacity: 1 }, { opacity: 1, offset: 0.45 }, { opacity: 0 }], { duration: 1150, delay: 60, fill: 'forwards' });
-  $('.half.a', slash).animate([{ transform: 'none' }, { transform: 'translate(-62%, -8%) rotate(-3deg)' }], o);
-  $('.half.b', slash).animate([{ transform: 'none' }, { transform: 'translate(62%, 8%) rotate(-3deg)' }], o);
-  if (STILL) { slash.getAnimations({ subtree: true }).forEach((a) => a.pause()); document.body.classList.add('opened'); }   // ?still: hold the first frame (for checking the hand-over)
-  else { setTimeout(open, 200); setTimeout(() => { slash.style.display = 'none'; }, 1400); }
+  const fl = createFlash($('canvas', slash));
+  const to = arcOnScreen(innerWidth, innerHeight);
+  const eo = (x) => 1 - Math.pow(1 - clamp(x), 3), ei = (x) => clamp(x) * clamp(x);
+  const t0 = performance.now(); let opened = false, burst = 14;
+  const step = () => {
+    const t = STILL != null ? +STILL : (performance.now() - t0) / 1000;
+    const o = eo((t - 0.1) / 0.75);                                  // the halves part
+    fl.render({
+      to, head: 1, tail: ei((t - 0.3) / 0.6), heat: 1.25 * (1 - ei((t - 0.25) / 0.65)),
+      white: 1 - clamp((t - 0.06) / 0.06), open: o, halfAlpha: 1 - ei((t - 0.18) / 0.62),
+      flareA: 1 - clamp((t - 0.15) / 0.4), burst: t > 0.1 && burst > 0 ? burst-- : 0,
+    });
+    if (t > 0.02) slash.classList.add('live');
+    const ex = 1 - eo((t - 0.12) / 0.9);                             // the shot is overexposed by the flash, then settles
+    filmEl.style.filter = ex > 0.002 ? `brightness(${(1 + ex * 2.2).toFixed(3)}) saturate(${(1 - ex * 0.5).toFixed(3)})` : '';
+    if (!opened && t > 0.12) { opened = true; if (STILL == null) open(); else document.body.classList.add('opened'); }
+    if (STILL != null) { if (t < 99) requestAnimationFrame(step); return; }
+    if (t < 1.25) requestAnimationFrame(step); else { slash.style.display = 'none'; filmEl.style.filter = ''; }
+  };
+  requestAnimationFrame(step);
 }
 if (location.hash === '#slash' || location.hash === '#arrive') history.replaceState(null, '', location.pathname);
 
@@ -116,76 +128,8 @@ function stageFrame(dt) {
 }
 
 // ---------------------------------------------------------------- the training hall
-const SETS = { craft: TOOLS.craft, ai: TOOLS.ai };
-const DESC = {
-  'Premiere Pro': 'Edit and storytelling — the blade I reach for first.', 'After Effects': 'Motion design, compositing and the occasional impossible shot.',
-  'Photoshop': 'Thumbnails, composites, visual design.', 'Illustrator': 'Vectors, icons and brand systems.', 'Audition': 'Dialogue clean-up and sound design.',
-  'Figma': 'Storyboards, UI and visual planning.', 'Blender': '3D scenes — like the universe you just walked through.', 'Element 3D': '3D inside After Effects.',
-  'Claude Code': 'Building tools and automations.', 'Google Antigravity': 'Agentic development.', 'Gemini · Nano Banana': 'Image generation and edits.',
-  'Veo': 'AI video generation.', 'Higgsfield': 'Cinematic AI motion.', 'Magnific AI': 'Upscaling and detail.', 'ElevenLabs': 'Voice and narration.',
-};
-let set = 'craft', idx = 0, timer = 0, busy = false;
-const ring = $('#arena-ring'), target = $('#arena-target'), slashSvg = $('#arena-slash'), card = $('#arena-card'), strip = $('#arena-strip'), fighter = $('.arena-fighter');
-const glyph = (t) => (t.icon ? `<img src="${t.icon}" alt="">` : `<b>${t.m}</b>`);
-function buildStrip() {
-  strip.innerHTML = SETS[set].map((t, i) => `<button role="listitem" style="--c:${t.c}" data-i="${i}"><i></i>${t.n}</button>`).join('');
-  $$('button', strip).forEach((b) => b.addEventListener('click', () => go(+b.dataset.i)));
-}
-function show(i) {
-  const t = SETS[set][i];
-  $('#ac-set').textContent = set === 'craft' ? 'Craft' : 'AI workshop';
-  $('#ac-name').textContent = t.n;
-  $('#ac-desc').textContent = DESC[t.n] || t.d || '';
-  $('#ac-count').textContent = `${String(i + 1).padStart(2, '0')} / ${String(SETS[set].length).padStart(2, '0')}`;
-  card.classList.remove('pop'); void card.offsetWidth; card.classList.add('pop');
-  $$('button', strip).forEach((b, k) => b.classList.toggle('on', k === i));
-}
-async function strike(i) {
-  busy = true;
-  const t = SETS[set][i];
-  const R = ring.getBoundingClientRect(), mob = innerWidth < 860;
-  target.style.setProperty('--c', t.c);
-  target.querySelectorAll('.half').forEach((h) => { h.innerHTML = glyph(t); });
-  const hitX = R.width * (mob ? 0.55 : 0.5), hitY = R.height * (mob ? 0.3 : 0.42);
-  const from = Math.random() < 0.5 ? -1 : 1;
-  const sx = from < 0 ? R.width * 0.3 : R.width + 80, sy = R.height + 80;
-  const halves = [...target.querySelectorAll('.half')];
-  halves.forEach((h) => { h.getAnimations().forEach((a) => a.cancel()); h.style.opacity = 1; h.style.transform = ''; });
-  if (reduce) { target.style.transform = `translate(${hitX}px, ${hitY}px)`; show(i); busy = false; return; }
-  // it flies in on an arc…
-  const fly = target.animate([
-    { transform: `translate(${sx}px, ${sy}px) rotate(${from * 60}deg) scale(.6)` },
-    { transform: `translate(${(sx + hitX) / 2}px, ${hitY - R.height * 0.28}px) rotate(${from * 20}deg) scale(.95)`, offset: 0.6 },
-    { transform: `translate(${hitX}px, ${hitY}px) rotate(0deg) scale(1)` },
-  ], { duration: 720, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
-  await fly.finished;
-  // …he cuts…
-  fighter.classList.remove('strike'); void fighter.offsetWidth; fighter.classList.add('strike');
-  slashSvg.classList.remove('go'); void slashSvg.getBoundingClientRect(); slashSvg.classList.add('go');
-  await new Promise((r) => setTimeout(r, 160));
-  // …and it falls apart in two halves
-  halves[0].animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(-70px, 120px) rotate(-38deg)', opacity: 0 }], { duration: 900, easing: 'cubic-bezier(.4,0,.8,.6)', fill: 'forwards', delay: 120 });
-  halves[1].animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(80px, 150px) rotate(42deg)', opacity: 0 }], { duration: 900, easing: 'cubic-bezier(.4,0,.8,.6)', fill: 'forwards', delay: 120 });
-  show(i);
-  busy = false;
-}
-function go(i) {
-  if (busy) return;
-  idx = (i + SETS[set].length) % SETS[set].length;
-  strike(idx);
-  clearTimeout(timer); timer = setTimeout(() => arenaVisible && go(idx + 1), 3400);
-}
-$('#arena-prev').addEventListener('click', () => go(idx - 1));
-$('#arena-next').addEventListener('click', () => go(idx + 1));
-$$('.arena-tabs button').forEach((b) => b.addEventListener('click', () => {
-  if (b.classList.contains('on')) return;
-  $$('.arena-tabs button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', String(x === b)); });
-  set = b.dataset.set; buildStrip(); busy = false; go(0);
-}));
-buildStrip();
-let arenaVisible = false, started = false;
-new IntersectionObserver(([e]) => { arenaVisible = e.isIntersecting; if (arenaVisible && !started) { started = true; go(0); } else if (arenaVisible) { clearTimeout(timer); timer = setTimeout(() => go(idx + 1), 1200); } }, { threshold: 0.35 }).observe(ring);
-addEventListener('keydown', (e) => { if (!arenaVisible) return; if (e.key === 'ArrowRight') go(idx + 1); if (e.key === 'ArrowLeft') go(idx - 1); });
+initArena($('#arena'));
+initJourney($('#journey'));
 
 // ---------------------------------------------------------------- frame loop
 let last = performance.now();

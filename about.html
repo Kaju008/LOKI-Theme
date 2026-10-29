@@ -27,8 +27,7 @@
     <a href="about.html" data-cut="The Timekeeper"><small>01</small>The Timekeeper</a><a href="works.html" data-cut="My Works"><small>02</small>My Works</a><a href="lab.html" data-cut="The Lab"><small>03</small>The Lab</a>
     <div class="menu-x"><a class="xbtn" href="./#paths" data-cut="The Multiverse">← Universe</a><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="classic.html">Classic site</a></div>
   </div>
-  <div class="slash-in" id="slash-in" aria-hidden="true"><i class="half a"></i><i class="half b"></i><svg class="ray"><path class="glow"/><path class="core"/></svg><b class="flash"></b></div>
-  <script src="js/arc-boot.js"></script>
+  <div class="slash-in" id="slash-in" aria-hidden="true"><canvas></canvas></div>
 
   <!-- ============ THE STAGE: one painted world, the character and the camera ============ -->
   <section class="wr-stage" id="wr-stage" aria-label="About Kaju Soni">
@@ -58,39 +57,85 @@
 
   <!-- ============ THE TRAINING HALL: one arena, the skills come at him ============ -->
   <section class="arena" id="arena" aria-label="Skills and tools">
-    <div class="arena-bg" aria-hidden="true"><img src="assets/warrior/sky.svg" alt=""><img src="assets/warrior/far.svg" alt=""><img src="assets/warrior/mid.svg" alt=""></div>
-    <header class="arena-head">
-      <p class="wr-kicker"><span>03</span> The training hall</p>
-      <h2 class="wr-h2">Skills <em>&amp;</em> Tools</h2>
-      <div class="arena-tabs" role="tablist"><button class="on" role="tab" aria-selected="true" data-set="craft">✦ Craft</button><button role="tab" aria-selected="false" data-set="ai">✦ AI workshop</button></div>
-    </header>
-    <div class="arena-ring" id="arena-ring">
-      <div class="arena-fighter"><img src="assets/warrior/lunge.webp" alt=""></div>
-      <svg class="arena-slash" id="arena-slash" viewBox="0 0 600 300" aria-hidden="true"><path d="M 20 240 Q 300 40 580 70"/></svg>
-      <div class="arena-target" id="arena-target" aria-hidden="true"><span class="half l"></span><span class="half r"></span></div>
-      <div class="arena-card" id="arena-card" aria-live="polite"><small id="ac-set"></small><b id="ac-name"></b><span id="ac-desc"></span><i id="ac-count"></i></div>
-      <button class="arena-nav prev" id="arena-prev" aria-label="Previous skill">‹</button>
-      <button class="arena-nav next" id="arena-next" aria-label="Next skill">›</button>
+    <canvas class="ar-canvas" id="ar-canvas" aria-label="Slice the tools: swipe across them"></canvas>
+    <div class="ar-ui">
+      <header class="ar-head">
+        <p class="wr-kicker"><span>03</span> The training hall</p>
+        <h2 class="wr-h2">Skills <em>&amp;</em> Tools</h2>
+        <p class="ar-sub">Swipe across the tools to cut them down. Every one is part of my kit.</p>
+      </header>
+      <div class="ar-bar">
+        <div class="ar-tabs" role="tablist"><button class="on" role="tab" aria-selected="true" data-set="all">All</button><button role="tab" aria-selected="false" data-set="craft">Craft</button><button role="tab" aria-selected="false" data-set="ai">AI workshop</button></div>
+        <div class="ar-hud"><span>Sliced <b id="ar-count">00</b></span><span>Best combo <b id="ar-best">×0</b></span><button class="ar-sound" id="ar-sound" type="button"><i></i><span>Sound on</span></button></div>
+      </div>
+      <aside class="ar-card" id="ar-card" aria-live="polite">
+        <small data-k="set"></small>
+        <h3 data-k="name"></h3>
+        <p data-k="say"></p>
+        <div class="ar-lv" data-k="lv"></div>
+        <ul data-k="use"></ul>
+      </aside>
+      <p class="ar-hint" id="ar-hint"><i></i>Swipe to slice</p>
+      <div class="ar-tray" id="ar-tray"></div>
     </div>
-    <div class="arena-strip" id="arena-strip" role="list"></div>
   </section>
 
-  <!-- ============ MY JOURNEY (the game comes next) ============ -->
-  <section class="journey" id="journey" aria-label="My journey">
-    <div class="jr-panel">
-      <div class="jr-hud"><span><small>Stage</small><b>01 / 05</b></span><span><small>World</small><b>1-1 First frame</b></span><span class="jr-title"><b>My Journey</b><small>Play the path so far</small></span><span><small>Coins</small><b>◉ × 003</b></span><span><small>Lives</small><b class="hearts">♥ ♥ ♡</b></span></div>
-      <div class="jr-track">
-        <i class="jr-path"></i>
-        <div class="jr-node"><b>▶</b><span>First cut</span></div>
-        <div class="jr-node"><b>✦</b><span>Motion design</span></div>
-        <div class="jr-node"><b>▲</b><span>Angel One</span></div>
-        <div class="jr-node"><b>1M</b><span>1M+ channel</span></div>
-        <div class="jr-node"><b>AI</b><span>AI frontier</span></div>
-        <span class="jr-runner" aria-hidden="true"></span>
+  <!-- ============ MY JOURNEY: a platformer through the career, set in Bengaluru ============ -->
+  <section class="journey" id="journey" aria-label="My journey — a small game">
+    <header class="jy-head">
+      <p class="wr-kicker"><span>04</span> The journey</p>
+      <h2 class="jy-title" aria-label="My Journey"><span style="--c:#ff5a4a;--d:#a8261a;--i:0">M</span><span style="--c:#ffc23d;--d:#b06a0a;--i:1">Y</span><i class="sp"></i><span style="--c:#4fd06a;--d:#1f7a32;--i:2">J</span><span style="--c:#4dc3ff;--d:#1a6aa8;--i:3">O</span><span style="--c:#ffc23d;--d:#b06a0a;--i:4">U</span><span style="--c:#ff5a4a;--d:#a8261a;--i:5">R</span><span style="--c:#9a7bff;--d:#4a2aa8;--i:6">N</span><span style="--c:#4dc3ff;--d:#1a6aa8;--i:7">E</span><span style="--c:#4fd06a;--d:#1f7a32;--i:8">Y</span></h2>
+      <p class="jy-plate"><b>Press start</b><i>2017 → 2026 · 6 companies · 1 city</i></p>
+    </header>
+    <div class="jy-cabinet">
+      <div class="jy-hud">
+        <span class="jy-lv" id="jy-level"></span>
+        <span class="jy-world" id="jy-world"></span>
+        <span class="jy-coins"><i></i>× <b id="jy-coins">00</b></span>
       </div>
-      <p class="jr-foot"><span>← → to move · Space to interact</span><b class="jr-start">Level 1 loading — coming soon</b></p>
+      <div class="jy-progress" id="jy-progress" aria-hidden="true"><i></i><b></b></div>
+      <div class="jy-screen">
+        <canvas id="jy-canvas" aria-label="Game screen"></canvas>
+        <div class="jy-bubble" id="jy-bubble" aria-live="polite"><span></span></div>
+        <button class="jy-startbig" data-k="start" type="button"><b>▶</b> Start</button>
+        <div class="jy-banner" id="jy-banner" aria-live="polite">
+          <p class="jy-lu">Level up!</p>
+          <b class="jy-lvn" data-b="lv"></b>
+          <p class="jy-co"><span data-b="co"></span><em data-b="yr"></em></p>
+          <h3 data-b="ti"></h3>
+          <p class="jy-no" data-b="no"></p>
+          <i class="jy-cont">Tap to continue ▶</i>
+        </div>
+      </div>
+      <div class="jy-pad">
+        <div class="jy-dpad"><button type="button" data-k="left" aria-label="Move left">◀</button><button type="button" data-k="down" aria-label="Duck">▼</button><button type="button" data-k="right" aria-label="Move right">▶</button></div>
+        <div class="jy-mid">
+          <div><button class="jy-btn" type="button" data-k="start">Start</button><button class="jy-btn snd" type="button" data-k="sound" aria-label="Sound on or off">Sound</button></div>
+          <p class="jy-keys"><kbd>←</kbd><kbd>→</kbd> move · <kbd>↑</kbd> / <kbd>Space</kbd> jump · <kbd>↓</kbd> duck</p>
+        </div>
+        <div class="jy-jump"><button type="button" data-k="up" aria-label="Jump">▲</button><small>Jump</small></div>
+      </div>
+      <a class="jy-skip" href="#say-hi">Skip the game → contact</a>
     </div>
   </section>
+
+  <div class="jy-modal" id="jy-modal" role="dialog" aria-modal="true" aria-labelledby="jy-mt">
+    <div class="jy-sheet">
+      <p class="jy-k">★ Level 7 · unlocked</p>
+      <h3 id="jy-mt">For my next level — let’s build together.</h3>
+      <p class="jy-sub">Whichever team you’re from, I’d love to hear what you’re making. Leave a note and I’ll get back to you.</p>
+      <form novalidate>
+        <div class="jy-row"><label><span>Your name</span><input name="name" autocomplete="name" required></label><label><span>Organisation</span><input name="org" autocomplete="organization"></label></div>
+        <label><span>Your email <em>(so I can reply)</em></span><input name="email" type="email" autocomplete="email"></label>
+        <label><span>Message</span><textarea name="message" rows="3" required placeholder="Tell me about the project, the team, or just say hi."></textarea></label>
+        <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="jy-actions"><button class="jy-send" type="submit"><span>Send to Kaju</span> ▶</button><button class="jy-copy" id="jy-copy" type="button"><span>Copy my email</span></button></div>
+        <p class="jy-msg" role="status"></p>
+      </form>
+      <div class="jy-done"><b>Level unlocked!</b><span>Message received. I’ll get back to you soon.</span></div>
+      <div class="jy-foot"><button type="button" data-close="stay">Not now</button><button type="button" data-close="contact">Go to contact ↓</button></div>
+    </div>
+  </div>
 
   <!-- ============ CONTACT ============ -->
   <section class="wr-contact" id="say-hi" aria-label="Contact">
