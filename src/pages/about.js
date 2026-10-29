@@ -5,6 +5,7 @@
 import '../pages.js';
 import { SITE, ABOUT, TOOLS } from '../config.js';
 import { $, $$, initContact } from './common.js';
+import { filmRect, arcOnScreen } from '../core/arc.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -48,33 +49,35 @@ function sizeFilm() {
 }
 sizeFilm(); addEventListener('resize', sizeFilm);
 
-// where he is in the frame, so narrow screens keep him in view (x as a fraction of the frame width)
-const focusX = (f) => 0.6 + 0.12 * ease(clamp((f - 60) / 50));
 function drawFilm(f, k = 0) {
   const i0 = Math.floor(f), a = near(i0); if (a < 0) return;
-  const im = frames[a], iw = im.naturalWidth, ih = im.naturalHeight;
-  const zoom = 1.04;                                                     // a little room for the hand-held drift
-  // k: on tall screens the shot lifts into the top of the screen so his face stays above The Maker panel
-  const cover = Math.max(W / iw, H / ih) * zoom;
-  const s = Math.max(W / iw * zoom, cover + ((H * 0.6) / ih - cover) * k), dw = iw * s, dh = ih * s;
-  let dx = W / 2 - focusX(f) * dw;
-  if (W / H > 1.2) dx = (W - dw) / 2;                                    // wide screens: the full composition
-  dx += mouse.sx * -W * 0.012; let dy = (H - dh) / 2 * (1 - k) + mouse.sy * -H * 0.012;
-  dx = clamp(dx, W - dw, 0); dy = dh >= H ? clamp(dy, H - dh, 0) : Math.max(0, dy);
-  fx.globalAlpha = 1; fx.drawImage(im, dx, dy, dw, dh);
+  // the same placement the universe used for the ray, plus a little hand-held drift
+  const { dx, dy, dw, dh } = filmRect(W, H, f, k, mouse.sx * -W * 0.012, mouse.sy * -H * 0.012);
+  fx.globalAlpha = 1; fx.drawImage(frames[a], dx, dy, dw, dh);
   const t = f - i0;                                                      // blend toward the next frame for a smooth scrub
   if (a === i0 && t > 0.02 && ready[i0 + 1]) { fx.globalAlpha = t; fx.drawImage(frames[i0 + 1], dx, dy, dw, dh); fx.globalAlpha = 1; }
 }
 
 // ---------------------------------------------------------------- the cut-open entrance
+// The ray the universe left on screen sits exactly on the sword's arc in the first frame: it flares,
+// the dark splits apart along it, and the ray hands over to the arc in the shot.
 const slash = $('#slash-in');
+const STILL = new URLSearchParams(location.search).has('still');
 let auto = reduce ? FILM.hold : 0, autoOn = false;
 const open = () => { document.body.classList.add('opened'); autoOn = true; };
-if (reduce) { slash.classList.add('done'); document.body.classList.add('opened'); }
+if (reduce) { slash.style.display = 'none'; document.body.classList.add('opened'); }
 else {
-  requestAnimationFrame(() => slash.classList.add('go'));
-  setTimeout(open, 420);
-  setTimeout(() => slash.classList.add('done'), 1600);
+  const P = arcOnScreen(innerWidth, innerHeight), mid = P[4];
+  slash.style.setProperty('--fx', `${(mid[0] / innerWidth * 100).toFixed(1)}%`);
+  slash.style.setProperty('--fy', `${(mid[1] / innerHeight * 100).toFixed(1)}%`);
+  const o = { duration: 900, delay: 260, easing: 'cubic-bezier(.7,0,.15,1)', fill: 'forwards' };
+  $('.flash', slash).animate([{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }], { duration: 700, delay: 60, easing: 'ease-out', fill: 'forwards' });
+  $('.glow', slash).animate([{ strokeWidth: '18px', opacity: 0.7 }, { strokeWidth: '70px', opacity: 1, offset: 0.35 }, { strokeWidth: '30px', opacity: 0 }], { duration: 1100, delay: 40, easing: 'ease-out', fill: 'forwards' });
+  $('.core', slash).animate([{ opacity: 1 }, { opacity: 1, offset: 0.45 }, { opacity: 0 }], { duration: 1150, delay: 60, fill: 'forwards' });
+  $('.half.a', slash).animate([{ transform: 'none' }, { transform: 'translate(-62%, -8%) rotate(-3deg)' }], o);
+  $('.half.b', slash).animate([{ transform: 'none' }, { transform: 'translate(62%, 8%) rotate(-3deg)' }], o);
+  if (STILL) { slash.getAnimations({ subtree: true }).forEach((a) => a.pause()); document.body.classList.add('opened'); }   // ?still: hold the first frame (for checking the hand-over)
+  else { setTimeout(open, 200); setTimeout(() => { slash.style.display = 'none'; }, 1400); }
 }
 if (location.hash === '#slash' || location.hash === '#arrive') history.replaceState(null, '', location.pathname);
 

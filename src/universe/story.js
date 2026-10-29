@@ -1,3 +1,4 @@
+import { arcOnScreen, arcPath } from '../core/arc.js';
 import * as THREE from 'three';
 import { createForeground } from './foreground.js';
 
@@ -323,6 +324,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
       trans.active = true; trans.path = [P.left, P.mid, P.right][i]; trans.k = 0;
       lenis.stop(); uni.setInteractive(false);
       document.body.classList.add('leaving');
+      if (i === 0) return timekeeper(page);
       const T = tunnel.uniforms;
       const tl = gsap.timeline();
       tl.to(trans, { k: 1, duration: 2.1, ease: 'power3.in' }, 0)
@@ -330,18 +332,40 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
         .to(final.uniforms.uCA, { value: 0.012, duration: 1.6, ease: 'power2.in' }, 0.3)
         .add(() => { tunnel.enabled = true; T.uOpen.value = 0; T.uIn.value = 0; T.uBlur.value = 0; }, 0.9)
         .to(T.uIn, { value: 1, duration: 1.0, ease: 'power2.in' }, 0.9)
-        .to(T.uBlur, { value: 1, duration: 1.0, ease: 'power2.in' }, 0.9);
-      if (i === 0) {
-        // The Timekeeper: the rushing timeline bends into one curved blade of light and the frame is cut open
-        tl.add(() => { const s = document.getElementById('slash-out'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); }, 1.55)
-          .add(() => { location.href = page.href + '#slash'; }, 2.35);
-        return;
-      }
-      tl.add(() => { const c = document.getElementById('cut'); document.getElementById('cut-label').textContent = page.label; c.classList.remove('go'); void c.offsetWidth; c.classList.add('go'); }, 1.5)
+        .to(T.uBlur, { value: 1, duration: 1.0, ease: 'power2.in' }, 0.9)
+        .add(() => { const c = document.getElementById('cut'); document.getElementById('cut-label').textContent = page.label; c.classList.remove('go'); void c.offsetWidth; c.classList.add('go'); }, 1.5)
         .add(() => { location.href = page.href + '#arrive'; }, 2.75);
     };
     // from anywhere: glide to the paths first, then go
     if (sp < 0.86) { scrollToP(1, 1.6); setTimeout(go, 1700); } else go();
+  }
+
+  // The Timekeeper: race down the timeline; the road's light gathers into one ray, the world goes dark around it,
+  // and the ray bends into the exact arc of the sword's cut that opens the About page (~2.1 s here, ~1.2 s there).
+  function timekeeper(page) {
+    const el = document.getElementById('slash-out'), svg = el.querySelector('svg'), dark = el.querySelector('.dark');
+    const paths = [...el.querySelectorAll('path')];
+    const W = innerWidth, H = innerHeight;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const to = arcOnScreen(W, H);
+    const from = to.map((_, k) => [W * 0.5, H + 30 - (H * 0.5 + 30) * (k / (to.length - 1))]);   // straight up the road to its vanishing point
+    const r = { draw: 0, bend: 0, dark: 0 };
+    const paint = () => {
+      const e = r.bend;
+      const pts = from.map((p, k) => [p[0] + (to[k][0] - p[0]) * e, p[1] + (to[k][1] - p[1]) * e]);
+      const d = arcPath(pts);
+      paths.forEach((p) => { p.setAttribute('d', d); p.style.strokeDashoffset = (1 - r.draw).toFixed(4); });
+      dark.style.opacity = r.dark.toFixed(3);
+    };
+    paint(); el.classList.add('on');
+    gsap.timeline({ onUpdate: paint })
+      .to(trans, { k: 1, duration: 2.0, ease: 'power2.in' }, 0)
+      .to(B.uSpeed, { value: 110, duration: 1.6, ease: 'power3.in' }, 0)
+      .to(final.uniforms.uCA, { value: 0.01, duration: 1.2, ease: 'power2.in' }, 0.3)
+      .to(r, { draw: 1, duration: 0.4, ease: 'power2.out' }, 0.45)
+      .to(r, { dark: 1, duration: 0.65, ease: 'power2.in' }, 0.75)
+      .to(r, { bend: 1, duration: 0.6, ease: 'power3.inOut' }, 1.25)
+      .add(() => { location.href = page.href + '#slash'; }, 1.95);
   }
 
   return { land, update, portal, shift: startShift, wipeTo, world, resize() {}, state: { fly, trans, shift, hold }, get sp() { return sp; }, set sp(v) { sp = v; } };
