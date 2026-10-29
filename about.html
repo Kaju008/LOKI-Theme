@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="css/universe.css">
   <link rel="stylesheet" href="css/pages.css">
   <link rel="stylesheet" href="css/warrior.css">
+  <link rel="preload" as="image" href="assets/warrior/film/d/f001.webp" media="(min-width: 900px)">
+  <link rel="preload" as="image" href="assets/warrior/film/m/f001.webp" media="(max-width: 899px)">
 </head>
 <body class="page warrior">
   <header class="hud">
@@ -31,16 +33,7 @@
   <section class="wr-stage" id="wr-stage" aria-label="About Kaju Soni">
     <div class="wr-pin">
       <div class="wr-world" id="wr-world" aria-hidden="true">
-        <img class="wl sky" src="assets/warrior/sky.svg" alt="">
-        <img class="wl far" src="assets/warrior/far.svg" alt="">
-        <img class="wl mid" src="assets/warrior/mid.svg" alt="">
-        <canvas class="wl leaves" id="wr-leaves"></canvas>
-        <div class="wr-hero" id="wr-hero">
-          <span class="trail" aria-hidden="true"></span>
-          <img class="pose lunge" src="assets/warrior/lunge.webp" alt="Kaju, sword drawn, mid-cut">
-          <img class="pose stand" src="assets/warrior/stand.webp" alt="Kaju standing, sword on his back">
-        </div>
-        <img class="wl front" src="assets/warrior/front.svg" alt="">
+        <canvas class="wr-film" id="wr-film"></canvas>
         <div class="wr-shade"></div>
       </div>
 

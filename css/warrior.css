@@ -20,12 +20,14 @@ body.warrior .hud { background: linear-gradient(180deg, rgba(5,8,12,.75), transp
 .wr-btn.line:hover { background: rgba(246,239,226,.1); }
 
 /* ---------------- the stage (pinned while the camera moves) ---------------- */
-.wr-stage { position: relative; height: 340vh; }
+.wr-stage { position: relative; height: 420vh; }
+.wr-film { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #07080c; }
+.warrior .wr-film { opacity: 0; transition: opacity .25s; } .warrior.opened .wr-film { opacity: 1; }
 .wr-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
 .wr-world { position: absolute; inset: 0; }
 .wl { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; object-position: 50% 100%; will-change: transform; pointer-events: none; user-select: none; }
 .wl.leaves { inset: 0; width: 100%; height: 100%; }
-.wr-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(5,8,12,.82) 0%, rgba(5,8,12,.45) 34%, transparent 58%), linear-gradient(0deg, rgba(5,8,12,.85), transparent 22%), radial-gradient(120% 90% at 70% 40%, transparent 55%, rgba(0,0,0,.45)); }
+.wr-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(5,8,12,.78) 0%, rgba(5,8,12,.42) 32%, transparent 54%), linear-gradient(0deg, rgba(5,8,12,.85), transparent 22%), radial-gradient(120% 90% at 70% 40%, transparent 55%, rgba(0,0,0,.45)); }
 .wr-hero { position: absolute; right: 4vw; bottom: 3vh; height: 86vh; aspect-ratio: 620 / 802; transform-origin: 62% 18%; will-change: transform; }
 .wr-hero .pose { position: absolute; bottom: 0; height: 100%; width: auto; max-width: none; filter: drop-shadow(0 24px 40px rgba(0,0,0,.55)) drop-shadow(-12px 0 30px rgba(240,140,60,.18)); -webkit-mask-image: linear-gradient(270deg, transparent 0, #000 7%); mask-image: linear-gradient(270deg, transparent 0, #000 7%); }
 .wr-hero .lunge { right: 0; }

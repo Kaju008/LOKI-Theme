@@ -17,88 +17,100 @@ $('#about-stats').innerHTML = ABOUT.stats.map(([v, l]) => `<div><dd>${v}</dd><dt
 $('#resume-btn').href = SITE.resume;
 initContact();
 
+// ---------------------------------------------------------------- the film: Kaju's own shot, scrubbed by the scroll
+// 120 frames (12 fps, 10 s): the blade's cut → he rises → sheathes the sword → the camera closes in on him.
+// The first 1.6 s play by themselves as the page is cut open; after that the scroll is the playhead.
+const FILM = { n: 120, hold: 19, set: innerWidth < 900 || (devicePixelRatio || 1) < 1.5 && innerWidth < 1100 ? 'm' : 'd' };
+const film = $('#wr-film'), fx = film.getContext('2d');
+const frames = new Array(FILM.n), ready = new Uint8Array(FILM.n);
+const src = (i) => `assets/warrior/film/${FILM.set}/f${String(i + 1).padStart(3, '0')}.webp`;
+const order = [];
+for (let i = 0; i <= FILM.hold; i++) order.push(i);                       // the opening first
+for (const step of [12, 6, 3, 1]) for (let i = 0; i < FILM.n; i += step) if (!order.includes(i)) order.push(i);   // then coarse → fine
+let loading = 0;
+function pump() {
+  while (loading < 6 && order.length) {
+    const i = order.shift(), im = new Image();
+    loading++; im.decoding = 'async';
+    im.onload = () => { frames[i] = im; ready[i] = 1; loading--; dirty = true; pump(); };
+    im.onerror = () => { loading--; pump(); };
+    im.src = src(i);
+  }
+}
+pump();
+const near = (i) => { for (let d = 0; d < FILM.n; d++) { if (ready[i - d]) return i - d; if (ready[i + d]) return i + d; } return -1; };
+
+let W = 0, H = 0, dirty = true;
+function sizeFilm() {
+  const d = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight; film.width = Math.round(W * d); film.height = Math.round(H * d);
+  fx.setTransform(d, 0, 0, d, 0, 0); fx.imageSmoothingQuality = 'high'; dirty = true;
+}
+sizeFilm(); addEventListener('resize', sizeFilm);
+
+// where he is in the frame, so narrow screens keep him in view (x as a fraction of the frame width)
+const focusX = (f) => 0.6 + 0.12 * ease(clamp((f - 60) / 50));
+function drawFilm(f, k = 0) {
+  const i0 = Math.floor(f), a = near(i0); if (a < 0) return;
+  const im = frames[a], iw = im.naturalWidth, ih = im.naturalHeight;
+  const zoom = 1.04;                                                     // a little room for the hand-held drift
+  // k: on tall screens the shot lifts into the top of the screen so his face stays above The Maker panel
+  const cover = Math.max(W / iw, H / ih) * zoom;
+  const s = Math.max(W / iw * zoom, cover + ((H * 0.6) / ih - cover) * k), dw = iw * s, dh = ih * s;
+  let dx = W / 2 - focusX(f) * dw;
+  if (W / H > 1.2) dx = (W - dw) / 2;                                    // wide screens: the full composition
+  dx += mouse.sx * -W * 0.012; let dy = (H - dh) / 2 * (1 - k) + mouse.sy * -H * 0.012;
+  dx = clamp(dx, W - dw, 0); dy = dh >= H ? clamp(dy, H - dh, 0) : Math.max(0, dy);
+  fx.globalAlpha = 1; fx.drawImage(im, dx, dy, dw, dh);
+  const t = f - i0;                                                      // blend toward the next frame for a smooth scrub
+  if (a === i0 && t > 0.02 && ready[i0 + 1]) { fx.globalAlpha = t; fx.drawImage(frames[i0 + 1], dx, dy, dw, dh); fx.globalAlpha = 1; }
+}
+
 // ---------------------------------------------------------------- the cut-open entrance
 const slash = $('#slash-in');
-const open = () => document.body.classList.add('opened');
-if (reduce) { slash.classList.add('done'); open(); }
+let auto = reduce ? FILM.hold : 0, autoOn = false;
+const open = () => { document.body.classList.add('opened'); autoOn = true; };
+if (reduce) { slash.classList.add('done'); document.body.classList.add('opened'); }
 else {
   requestAnimationFrame(() => slash.classList.add('go'));
-  setTimeout(open, 520);
+  setTimeout(open, 420);
   setTimeout(() => slash.classList.add('done'), 1600);
 }
 if (location.hash === '#slash' || location.hash === '#arrive') history.replaceState(null, '', location.pathname);
 
-// ---------------------------------------------------------------- the stage: scroll drives the camera
-const stage = $('#wr-stage'), hero = $('#wr-hero'), intro = $('#wr-intro'), maker = $('#maker'), cue = $('#wr-scroll');
-const lunge = $('.pose.lunge', hero), stand = $('.pose.stand', hero), trail = $('.trail', hero);
-const L = { sky: $('.wl.sky'), far: $('.wl.far'), mid: $('.wl.mid'), front: $('.wl.front') };
+// ---------------------------------------------------------------- the stage: scroll drives the film
+const stage = $('#wr-stage'), intro = $('#wr-intro'), maker = $('#maker'), cue = $('#wr-scroll');
 const mouse = { x: 0, y: 0, sx: 0, sy: 0 };
 addEventListener('pointermove', (e) => { mouse.x = e.clientX / innerWidth - 0.5; mouse.y = e.clientY / innerHeight - 0.5; }, { passive: true });
-$('[data-maker]').addEventListener('click', (e) => { e.preventDefault(); scrollTo({ top: stage.offsetTop + (stage.offsetHeight - innerHeight) * 0.78, behavior: 'smooth' }); });
+$('[data-maker]').addEventListener('click', (e) => { e.preventDefault(); scrollTo({ top: stage.offsetTop + (stage.offsetHeight - innerHeight) * 0.8, behavior: 'smooth' }); });
 
-function stageFrame() {
+let cur = 0;
+function stageFrame(dt) {
   const r = stage.getBoundingClientRect();
   const p = clamp(-r.top / (r.height - innerHeight));
   const mob = innerWidth < 860;
+  const mx = mouse.sx, my = mouse.sy;
   mouse.sx += (mouse.x - mouse.sx) * 0.06; mouse.sy += (mouse.y - mouse.sy) * 0.06;
-  // 1) the intro lines leave
-  const iv = 1 - seg(p, 0.05, 0.18);
-  intro.style.opacity = iv.toFixed(3); intro.style.transform = mob ? `translateY(${(-(1 - iv) * 40).toFixed(1)}px)` : `translateY(calc(-46% - ${((1 - iv) * 40).toFixed(1)}px))`;
+  // the playhead: the opening plays itself, then the scroll takes over
+  if (autoOn && auto < FILM.hold) auto = Math.min(FILM.hold, auto + dt * 12);
+  const scrollF = FILM.hold + seg(p, 0.02, 0.9) * (FILM.n - 1 - FILM.hold);
+  const target = auto < FILM.hold ? auto : scrollF;
+  cur += (target - cur) * (auto < FILM.hold ? 1 : Math.min(1, dt * 9));
+  if (Math.abs(target - cur) < 0.002) cur = target;
+  const lift = innerWidth / innerHeight < 0.8 ? ease(seg(p, 0.5, 0.62)) : 0;
+  if (r.bottom > 0 && (dirty || cur !== stageFrame.last || lift !== stageFrame.lift || Math.abs(mx - mouse.sx) > 1e-4 || Math.abs(my - mouse.sy) > 1e-4)) { drawFilm(cur, lift); dirty = false; stageFrame.last = cur; stageFrame.lift = lift; }
+  // the intro lines leave as he rises
+  const iv = 1 - seg(p, 0.04, 0.14);
+  intro.style.opacity = iv.toFixed(3);
+  intro.style.transform = mob ? `translateY(${(-(1 - iv) * 40).toFixed(1)}px)` : `translateY(calc(-46% - ${((1 - iv) * 40).toFixed(1)}px))`;
   intro.style.visibility = iv < 0.01 ? 'hidden' : 'visible';
-  cue.style.opacity = (1 - seg(p, 0.02, 0.08)).toFixed(3);
-  // 2) he sheathes the sword: the drawn pose sweeps away, the standing pose settles in
-  const sh = ease(seg(p, 0.18, 0.33));
-  lunge.style.opacity = (1 - sh).toFixed(3);
-  lunge.style.filter = sh > 0 && sh < 1 ? `blur(${(sh * 6).toFixed(1)}px) drop-shadow(0 24px 40px rgba(0,0,0,.55))` : '';
-  lunge.style.transform = `translateX(${(sh * 6).toFixed(2)}%) rotate(${(sh * 3).toFixed(2)}deg)`;
-  const st = ease(seg(p, 0.23, 0.37));
-  stand.style.opacity = st.toFixed(3);
-  stand.style.filter = st > 0 && st < 1 ? `blur(${((1 - st) * 5).toFixed(1)}px)` : '';
-  stand.style.transform = `translateX(${((1 - st) * -4).toFixed(2)}%)`;
-  // the blade's light arcs over his shoulder to the scabbard on his back
-  const ta = Math.sin(seg(p, 0.2, 0.38) * Math.PI);
-  if (document.body.classList.contains('opened') && p > 0.15) { trail.style.animation = 'none'; trail.style.opacity = ta.toFixed(3); trail.style.transform = `rotate(${(-8 - seg(p, 0.2, 0.38) * 70).toFixed(1)}deg) scale(${(1 - seg(p, 0.2, 0.38) * 0.5).toFixed(3)})`; }
-  else if (p <= 0.15 && trail.style.animation === 'none') { trail.style.opacity = '0'; }
-  // 3) the camera closes in on his upper body and drifts right; the maker rises on the left
-  const c = ease(seg(p, 0.42, 0.8));
-  const zoom = 1 + c * (mob ? 0.45 : 0.75);
-  hero.style.transform = `translate(${(c * (mob ? 4 : 7) + mouse.sx * -1.2).toFixed(2)}vw, ${(c * (mob ? -2 : 26) + mouse.sy * -0.8).toFixed(2)}vh) scale(${zoom.toFixed(3)})`;
-  const par = (el, depth, z) => { el.style.transform = `translate(${(mouse.sx * -depth * 2 + c * depth * 1.4).toFixed(2)}%, ${(mouse.sy * -depth + c * depth * 0.8).toFixed(2)}%) scale(${(1 + c * z).toFixed(3)})`; };
-  par(L.sky, 0.3, 0.03); par(L.far, 0.6, 0.07); par(L.mid, 1.0, 0.13); par(L.front, 2.2, 0.32);
-  const mv = seg(p, 0.55, 0.68);
+  cue.style.opacity = (1 - seg(p, 0.02, 0.06)).toFixed(3);
+  // once the camera has closed in on him, the maker rises on the left
+  const mv = seg(p, 0.56, 0.64);
   maker.style.opacity = mv > 0 ? '1' : '0';
   maker.style.visibility = mv > 0 ? 'visible' : 'hidden';
   maker.classList.toggle('in', mv > 0.2);
 }
-
-// ---------------------------------------------------------------- falling maple leaves
-const cv = $('#wr-leaves'), g = cv.getContext('2d');
-let leaves = [];
-function sizeLeaves() {
-  const d = Math.min(devicePixelRatio || 1, 2);
-  cv.width = innerWidth * d; cv.height = innerHeight * d; g.setTransform(d, 0, 0, d, 0, 0);
-  const n = innerWidth < 700 ? 16 : 34;
-  leaves = Array.from({ length: n }, () => ({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, s: 5 + Math.random() * 9, r: Math.random() * 6, vr: (Math.random() - 0.5) * 2, vy: 18 + Math.random() * 30, ph: Math.random() * 6, c: ['#a5221c', '#c4321f', '#d94a24', '#e8692b'][Math.floor(Math.random() * 4)] }));
-}
-function leaf(x, y, s, r, c) {
-  g.save(); g.translate(x, y); g.rotate(r); g.fillStyle = c; g.beginPath();
-  for (let i = 0; i < 5; i++) {
-    const a0 = i / 5 * Math.PI * 2;
-    for (const [da, rr] of [[-0.42, 0.42], [-0.2, 0.78], [0, 1], [0.2, 0.78], [0.42, 0.42]]) { const a = a0 + da; g.lineTo(Math.cos(a) * s * rr, Math.sin(a) * s * rr); }
-    const a = a0 + 0.628; g.lineTo(Math.cos(a) * s * 0.22, Math.sin(a) * s * 0.22);
-  }
-  g.closePath(); g.fill(); g.restore();
-}
-function leavesFrame(t, dt) {
-  g.clearRect(0, 0, innerWidth, innerHeight);
-  for (const l of leaves) {
-    l.y += l.vy * dt; l.x += Math.sin(t * 0.8 + l.ph) * 22 * dt - 10 * dt; l.r += l.vr * dt;
-    if (l.y > innerHeight + 20) { l.y = -20; l.x = Math.random() * innerWidth * 1.1; }
-    if (l.x < -20) l.x = innerWidth + 20;
-    g.globalAlpha = 0.85; leaf(l.x, l.y, l.s, l.r, l.c);
-  }
-}
-sizeLeaves(); addEventListener('resize', sizeLeaves);
 
 // ---------------------------------------------------------------- the training hall
 const SETS = { craft: TOOLS.craft, ai: TOOLS.ai };
@@ -177,6 +189,5 @@ let last = performance.now();
 (function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  stageFrame();
-  if (!reduce) leavesFrame(now / 1000, dt);
+  stageFrame(dt);
 })(last);
