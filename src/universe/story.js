@@ -330,8 +330,14 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
         .to(final.uniforms.uCA, { value: 0.012, duration: 1.6, ease: 'power2.in' }, 0.3)
         .add(() => { tunnel.enabled = true; T.uOpen.value = 0; T.uIn.value = 0; T.uBlur.value = 0; }, 0.9)
         .to(T.uIn, { value: 1, duration: 1.0, ease: 'power2.in' }, 0.9)
-        .to(T.uBlur, { value: 1, duration: 1.0, ease: 'power2.in' }, 0.9)
-        .add(() => { const c = document.getElementById('cut'); document.getElementById('cut-label').textContent = page.label; c.classList.remove('go'); void c.offsetWidth; c.classList.add('go'); }, 1.5)
+        .to(T.uBlur, { value: 1, duration: 1.0, ease: 'power2.in' }, 0.9);
+      if (i === 0) {
+        // The Timekeeper: the rushing timeline bends into one curved blade of light and the frame is cut open
+        tl.add(() => { const s = document.getElementById('slash-out'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); }, 1.55)
+          .add(() => { location.href = page.href + '#slash'; }, 2.35);
+        return;
+      }
+      tl.add(() => { const c = document.getElementById('cut'); document.getElementById('cut-label').textContent = page.label; c.classList.remove('go'); void c.offsetWidth; c.classList.add('go'); }, 1.5)
         .add(() => { location.href = page.href + '#arrive'; }, 2.75);
     };
     // from anywhere: glide to the paths first, then go

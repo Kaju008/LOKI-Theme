@@ -30,7 +30,7 @@ if (burger && menu) burger.addEventListener('click', () => { const o = menu.hidd
 const cut = document.getElementById('cut');
 if (cut) {
   const label = cut.querySelector('.cut-label');
-  if (!reduce) { cut.classList.add('open'); setTimeout(() => cut.classList.remove('open'), 1700); }
+  if (!reduce && !document.body.classList.contains('warrior')) { cut.classList.add('open'); setTimeout(() => cut.classList.remove('open'), 1700); }
   if (location.hash === '#arrive') history.replaceState(null, '', location.pathname + location.search);
   document.querySelectorAll('a[data-cut]').forEach((a) => a.addEventListener('click', (e) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || reduce) return;

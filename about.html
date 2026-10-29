@@ -7,17 +7,12 @@
   <meta name="description" content="About Kaju Soni — video editor, motion designer and AI filmmaker from Bengaluru.">
   <meta name="theme-color" content="#020308">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
-  <script>(function(){try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('anim')}catch(e){}})();</script>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/universe.css">
   <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/warrior.css">
 </head>
-<body class="page about-body">
-  <canvas id="stars" aria-hidden="true"></canvas>
-  <div class="page-bg" aria-hidden="true"></div>
+<body class="page warrior">
   <header class="hud">
     <a class="brand" href="./" aria-label="Kaju Soni — replay the universe"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 4h16l-6 10 6 10H8l6-10z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 14v10" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="14" r="2.2" fill="currentColor"/></svg><span>Kaju Soni</span></a>
     <nav class="nav" aria-label="Paths"><a href="about.html" data-cut="The Timekeeper" class="on" aria-current="page">The Timekeeper</a><a href="works.html" data-cut="My Works">My Works</a><a href="lab.html" data-cut="The Lab">The Lab</a></nav>
@@ -30,61 +25,86 @@
     <a href="about.html" data-cut="The Timekeeper"><small>01</small>The Timekeeper</a><a href="works.html" data-cut="My Works"><small>02</small>My Works</a><a href="lab.html" data-cut="The Lab"><small>03</small>The Lab</a>
     <div class="menu-x"><a class="xbtn" href="./#paths" data-cut="The Multiverse">← Universe</a><a class="xbtn" href="games.html">Games</a><a class="xbtn" href="classic.html">Classic site</a></div>
   </div>
-  <section class="ah" id="ah" aria-label="About Kaju Soni">
-    <div class="ah-sky" id="ah-sky" aria-hidden="true"></div>
-    <div class="ah-copy">
-      <div class="ah-col ah-eyebrow"><span class="ent-mask"><span class="ent-line">The Timekeeper</span></span></div>
-      <h1 class="ah-col ah-title"><span class="ent-mask"><span class="ent-line" id="ah-name">Editor</span></span></h1>
-      <div class="ah-col ah-rule"><span></span></div>
-      <p class="ah-col ah-lede" id="ah-lede"></p>
-      <div class="ah-col ah-cta">
-        <button class="ah-planet ah-planet-l" type="button" data-slot="l"></button>
-        <button class="ah-planet ah-planet-r" type="button" data-slot="r"></button>
-        <a href="#say-hi">Say hello</a>
-        <span class="ah-label ah-label-l"></span>
-        <span class="ah-label ah-label-r"></span>
-      </div>
-    </div>
-    <button class="ah-scroll" type="button" aria-label="Scroll to my story">
-      <svg viewBox="0 0 26 33" fill="none" aria-hidden="true"><path d="M13 1.5 V31.5 M1.9 20.4 L13 31.5 L24.1 20.4" stroke="#ffffff" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/></svg>
-    </button>
-  </section>
-  <main class="page-main about-main" id="story">
-    <section class="tk" aria-label="About me">
-      <div class="tk-copy" data-rise>
-        <p class="eyebrow"><span class="dot"></span>Path I · The story</p>
-        <h2 class="h-cinzel">The <br>Timekeeper</h2>
-        <p class="tk-sub" id="about-title"></p>
-        <div class="rule"><i></i></div>
-        <div class="tk-body" id="about-body"></div>
-        <dl class="stats" id="about-stats"></dl>
-        <div class="parch-cta">
-          <a class="btn solid" id="resume-btn" target="_blank" rel="noopener"><span>Download résumé</span><b>↗</b></a>
-          <a class="btn ghost" href="works.html" data-cut="My Works">See the work <span>→</span></a>
+  <div class="slash-in" id="slash-in" aria-hidden="true"><i class="half a"></i><i class="half b"></i><svg class="seam" viewBox="0 0 100 100" preserveAspectRatio="none"><path pathLength="1" d="M -5 92 Q 48 58 105 8"/></svg><b class="flash"></b></div>
+
+  <!-- ============ THE STAGE: one painted world, the character and the camera ============ -->
+  <section class="wr-stage" id="wr-stage" aria-label="About Kaju Soni">
+    <div class="wr-pin">
+      <div class="wr-world" id="wr-world" aria-hidden="true">
+        <img class="wl sky" src="assets/warrior/sky.svg" alt="">
+        <img class="wl far" src="assets/warrior/far.svg" alt="">
+        <img class="wl mid" src="assets/warrior/mid.svg" alt="">
+        <canvas class="wl leaves" id="wr-leaves"></canvas>
+        <div class="wr-hero" id="wr-hero">
+          <span class="trail" aria-hidden="true"></span>
+          <img class="pose lunge" src="assets/warrior/lunge.webp" alt="Kaju, sword drawn, mid-cut">
+          <img class="pose stand" src="assets/warrior/stand.webp" alt="Kaju standing, sword on his back">
         </div>
+        <img class="wl front" src="assets/warrior/front.svg" alt="">
+        <div class="wr-shade"></div>
       </div>
-      <figure class="tk-photo" data-rise>
-        <span class="tk-ring" aria-hidden="true"></span>
-        <span class="tk-frame"><img src="assets/img/me-think.webp" srcset="assets/img/me-think-sm.webp 600w, assets/img/me-think.webp 860w" sizes="(max-width: 800px) 70vw, 30vw" alt="Kaju Soni, hand on chin, thinking"></span>
-        <figcaption><b>Kaju Soni</b><span>Bengaluru · 8+ years</span></figcaption>
-      </figure>
-    </section>
 
-    <section class="arsenal" aria-label="Skills and tools">
-      <header class="sec-mini" data-rise><p class="eyebrow"><span class="dot"></span>The arsenal</p><h2 class="h-cinzel">Skills &amp; Tools</h2><p class="lead">Everything orbits the edit.</p></header>
-      <div class="ars-grid">
-        <div class="ars-col" data-rise><p class="ars-label">Craft</p><div class="chips" id="sk-craft"></div></div>
-        <div class="ars-col" data-rise><p class="ars-label">AI</p><div class="chips" id="sk-ai"></div></div>
+      <div class="wr-copy wr-intro" id="wr-intro">
+        <p class="wr-kicker"><span>01</span> Bengaluru, India <i></i> Digital storyteller</p>
+        <h1 class="wr-h1"><span>Craft</span> <span>with</span> <em>intent.</em></h1>
+        <p class="wr-lede">I shape stories through the rhythm of an edit and the precision of motion.</p>
+        <div class="wr-cta"><a class="wr-btn gold" href="#arena">Enter the arena <b>›</b></a><a class="wr-btn line" href="#maker" data-maker>Meet the maker <b>↓</b></a></div>
       </div>
-    </section>
 
-    <section class="tk-contact" id="say-hi" aria-label="Contact">
-      <div class="tk-contact-copy" data-rise>
-        <p class="eyebrow"><span class="dot"></span>Contact</p>
-        <h2 class="h-cinzel">Let's create <br>together</h2>
-        <p class="lead">Collaborations, projects, or just to say hi — the portal is open.</p>
+      <div class="wr-copy wr-maker" id="maker">
+        <p class="wr-kicker"><span>02</span> The maker</p>
+        <h2 class="wr-h2">The <em>Maker</em></h2>
+        <div class="wr-body" id="about-body"></div>
+        <dl class="wr-stats" id="about-stats"></dl>
+        <div class="wr-cta"><a class="wr-btn gold" id="resume-btn" target="_blank" rel="noopener"><b>⤓</b> Download résumé</a><a class="wr-btn line" href="works.html" data-cut="My Works">See the work <b>›</b></a></div>
       </div>
-      <div data-rise>
+      <p class="wr-scroll" id="wr-scroll"><i></i>Scroll</p>
+    </div>
+  </section>
+
+  <!-- ============ THE TRAINING HALL: one arena, the skills come at him ============ -->
+  <section class="arena" id="arena" aria-label="Skills and tools">
+    <div class="arena-bg" aria-hidden="true"><img src="assets/warrior/sky.svg" alt=""><img src="assets/warrior/far.svg" alt=""><img src="assets/warrior/mid.svg" alt=""></div>
+    <header class="arena-head">
+      <p class="wr-kicker"><span>03</span> The training hall</p>
+      <h2 class="wr-h2">Skills <em>&amp;</em> Tools</h2>
+      <div class="arena-tabs" role="tablist"><button class="on" role="tab" aria-selected="true" data-set="craft">✦ Craft</button><button role="tab" aria-selected="false" data-set="ai">✦ AI workshop</button></div>
+    </header>
+    <div class="arena-ring" id="arena-ring">
+      <div class="arena-fighter"><img src="assets/warrior/lunge.webp" alt=""></div>
+      <svg class="arena-slash" id="arena-slash" viewBox="0 0 600 300" aria-hidden="true"><path d="M 20 240 Q 300 40 580 70"/></svg>
+      <div class="arena-target" id="arena-target" aria-hidden="true"><span class="half l"></span><span class="half r"></span></div>
+      <div class="arena-card" id="arena-card" aria-live="polite"><small id="ac-set"></small><b id="ac-name"></b><span id="ac-desc"></span><i id="ac-count"></i></div>
+      <button class="arena-nav prev" id="arena-prev" aria-label="Previous skill">‹</button>
+      <button class="arena-nav next" id="arena-next" aria-label="Next skill">›</button>
+    </div>
+    <div class="arena-strip" id="arena-strip" role="list"></div>
+  </section>
+
+  <!-- ============ MY JOURNEY (the game comes next) ============ -->
+  <section class="journey" id="journey" aria-label="My journey">
+    <div class="jr-panel">
+      <div class="jr-hud"><span><small>Stage</small><b>01 / 05</b></span><span><small>World</small><b>1-1 First frame</b></span><span class="jr-title"><b>My Journey</b><small>Play the path so far</small></span><span><small>Coins</small><b>◉ × 003</b></span><span><small>Lives</small><b class="hearts">♥ ♥ ♡</b></span></div>
+      <div class="jr-track">
+        <i class="jr-path"></i>
+        <div class="jr-node"><b>▶</b><span>First cut</span></div>
+        <div class="jr-node"><b>✦</b><span>Motion design</span></div>
+        <div class="jr-node"><b>▲</b><span>Angel One</span></div>
+        <div class="jr-node"><b>1M</b><span>1M+ channel</span></div>
+        <div class="jr-node"><b>AI</b><span>AI frontier</span></div>
+        <span class="jr-runner" aria-hidden="true"></span>
+      </div>
+      <p class="jr-foot"><span>← → to move · Space to interact</span><b class="jr-start">Level 1 loading — coming soon</b></p>
+    </div>
+  </section>
+
+  <!-- ============ CONTACT ============ -->
+  <section class="wr-contact" id="say-hi" aria-label="Contact">
+    <div class="wr-contact-copy">
+      <p class="wr-kicker"><span>05</span> Let's storytell</p>
+      <h2 class="wr-h2">Let's create <em>together</em></h2>
+      <p class="wr-lede">Good ideas start with a conversation.</p>
+    </div>
           <form class="form glass" id="form" novalidate>
             <label><span>Your name</span><input name="name" autocomplete="name" required></label>
             <label><span>Your email</span><input name="email" type="email" autocomplete="email" required></label>
@@ -101,11 +121,8 @@
               <a class="ic" id="c-resume" target="_blank" rel="noopener" aria-label="Résumé"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M14 2v6h6M9 13h8M9 17h6" stroke="currentColor" stroke-width="1.6"/></svg></a>
             </div>
           </form>
-      </div>
-    </section>
-    <a class="back" href="./#paths" data-cut="The Multiverse">← Back to the three paths</a>
-  </main>
-  <footer class="page-foot">© 2026 Kaju Soni · Bengaluru · <a href="https://github.com/Kaju008/LOKI-Theme/blob/main/CREDITS.md" target="_blank" rel="noopener">Credits</a></footer>
+  </section>
+  <footer class="page-foot">© 2026 Kaju Soni · Bengaluru · <a href="about-worlds.html">Previous version</a> · <a href="https://github.com/Kaju008/LOKI-Theme/blob/main/CREDITS.md" target="_blank" rel="noopener">Credits</a></footer>
   <div class="cut" id="cut" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="blade"></i><span class="cut-label">The Timekeeper</span></div>
   <div class="toast" id="toast" role="status"></div>
   <script type="module" src="js/about.js"></script>
