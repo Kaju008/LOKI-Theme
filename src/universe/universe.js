@@ -7,6 +7,7 @@ import { createTree } from './tree.js';
 import { createThrone, createRocks } from './props.js';
 import { createSignpost } from './signpost.js';
 import { createAtmosphere } from './atmos.js';
+import { createDrawn } from './drawn.js';
 
 // =====================================================================
 //  The Universe — the Blender scene rebuilt live for the web.
@@ -66,6 +67,11 @@ export async function createUniverse(renderer, tier) {
   // ---- clouds, mist and haze
   const atmos = createAtmosphere(tier); scene.add(atmos.group);
   updaters.push((t) => atmos.update(t));
+
+  // ---- the drawn world's own pieces (bubble clouds, sparkle sky, planet skins) — hidden until the shift
+  const drawn = createDrawn({ tier, planets }); scene.add(drawn.group);
+  updaters.push((t, dt, cam) => drawn.update(t, cam));
+  const FOG = scene.fog.density;
 
   // ---- dust + shooting stars
   const motes = createMotes(tier); scene.add(motes.object);
@@ -154,6 +160,14 @@ export async function createUniverse(renderer, tier) {
 
   return {
     scene, camera, update, resize, bridge, tree, throne, rocks, planets, sky, sign, atmos, DECK_Y, PLAZA,
+    // 0 = the real world, 1 = the drawn world (sky goes black, clouds go big and violet)
+    setStyle(k) {
+      sky.skyU.uGain.value = 0.5 * (1 - k);                 // pitch-black sky
+      atmos.uniforms.uGain.value = 1 - k;                   // no fog, no haze in the drawn world
+      atmos.group.visible = k < 0.999;
+      scene.fog.density = FOG * (1 - k);
+      drawn.set(k);
+    },
     setInteractive(v) { enabled = v; if (!v) document.body.dataset.hover = ''; },
     paths: bridge.paths,
   };

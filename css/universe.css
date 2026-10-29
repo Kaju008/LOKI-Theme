@@ -94,3 +94,25 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 }
 .slider-wrap.thin .load { margin-top: 20px; width: 64px; }
 body.uni .gate-kicker { display: none; }
+
+/* ---------- the shift: hold gems beside the throne ---------- */
+.hold { --p: 0; position: fixed; left: 0; top: 0; z-index: 30; display: flex; align-items: center; gap: 14px; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; visibility: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.hold.on { visibility: visible; }
+.hold-r { flex-direction: row; }
+.hold-l { flex-direction: row-reverse; }
+.hold-gem { position: relative; width: 62px; height: 62px; flex: none; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.22), rgba(20,30,50,.55) 60%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 0 calc(18px + var(--p) * 40px) rgba(110,230,210,calc(.35 + var(--p) * .5)); transition: transform .3s var(--ease-o); }
+.hold-gem i { width: 16px; height: 16px; transform: rotate(45deg) scale(calc(1 + var(--p) * .35)); background: linear-gradient(135deg, #e7fff7, #6fe8c8 45%, #8b6cff); box-shadow: 0 0 14px #6fe8c8, 0 0 30px rgba(139,108,255,.7); animation: gemPulse 2.2s ease-in-out infinite; }
+@keyframes gemPulse { 50% { filter: brightness(1.35); } }
+.hold-gem svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.hold-track { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 2.5; }
+.hold-fill { fill: none; stroke: #8ff2da; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 176; stroke-dashoffset: calc(176 * (1 - var(--p))); filter: drop-shadow(0 0 6px #6fe8c8); }
+.hold.down .hold-gem { transform: scale(.94); }
+.hold:hover .hold-gem { transform: scale(1.06); }
+.hold:focus-visible { outline: none; } .hold:focus-visible .hold-gem { box-shadow: 0 0 0 2px var(--gold-2); }
+.hold-txt { display: grid; gap: 5px; text-align: left; text-shadow: 0 2px 12px #000; white-space: nowrap; }
+.hold-l .hold-txt { text-align: right; }
+.hold-txt b { font: 500 10px/1 var(--f-display); letter-spacing: .24em; text-transform: uppercase; }
+.hold-txt small { font: 500 9px/1 var(--f-display); letter-spacing: .2em; text-transform: uppercase; color: #8ff2da; opacity: calc(.6 + var(--p) * .4); }
+body.shifting .hold, body.shifting #mot { visibility: hidden; }
+@media (max-width: 700px) { .hold-gem { width: 48px; height: 48px; } .hold-txt b { font-size: 8.5px; letter-spacing: .16em; } .hold-txt small { font-size: 8px; } .hold { gap: 8px; } }
+#world-toggle[hidden] { display: none !important; }

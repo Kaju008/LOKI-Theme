@@ -30,7 +30,7 @@ const KEYS = [
   { p: 1.0, pos: V(0, 7.4, -22.5), tgt: V(0, 7.9, -46), fov: 50 },  // the signpost at the fork
 ];
 
-export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLanded }) {
+export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon, onLanded }) {
   const cam = uni.camera;
   const posC = new THREE.CatmullRomCurve3(KEYS.map((k) => k.pos), false, 'centripetal');
   const tgtC = new THREE.CatmullRomCurve3(KEYS.map((k) => k.tgt), false, 'centripetal');
@@ -77,6 +77,107 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
   const B = uni.bridge.uniforms;
   let lockY = false;
 
+  // ---------------- the shift: real world ⇄ drawn world
+  // Hold a gem beside the throne for 3 s → glitch, the camera spins around the throne on a light
+  // rail, rises up the tree while a wipe redraws the world, then glides down to the signpost.
+  const TU = toon.uniforms;
+  const world = { drawn: false, busy: false };
+  const shift = { active: false, k: 0, from: null, tfrom: null, a0: 0 };
+  const BLOOM_REAL = bloom.strength, BLOOM_DRAWN = 0.3;
+  const C = V(0, 6.2, 0);                                   // the throne
+  function applyWorld(k) { uni.setStyle(k); bloom.strength = BLOOM_REAL + (BLOOM_DRAWN - BLOOM_REAL) * k; }
+  if (sessionStorage.getItem('kaju-style') === 'drawn') {
+    world.drawn = true; toon.enabled = true; TU.uA.value = TU.uB.value = 1; TU.uWipe.value = 1; applyWorld(1);
+  }
+  // the light rail: two fast loops around the throne, then a spiral up the trunk into the crown
+  const railPts = [];
+  for (let i = 0; i <= 120; i++) {
+    const u = i / 120, a = u * Math.PI * 2 * 3.0;
+    const r = u < 0.55 ? 8.6 - u * 2 : 7.5 - (u - 0.55) * 6;
+    const y = u < 0.55 ? 3.4 + u * 8 : 7.8 + (u - 0.55) / 0.45 * 26;
+    railPts.push(V(Math.sin(a) * r, y, Math.cos(a) * r - (u > 0.55 ? (u - 0.55) * 14 : 0)));
+  }
+  const railCurve = new THREE.CatmullRomCurve3(railPts);
+  const railU = { uHead: { value: 0 }, uAlpha: { value: 0 }, uTime: { value: 0 } };
+  const rail = new THREE.Mesh(new THREE.TubeGeometry(railCurve, 600, 0.09, 8, false), new THREE.ShaderMaterial({
+    uniforms: railU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader: `uniform float uHead,uAlpha,uTime; varying vec2 vUv;
+      void main(){ float u=vUv.x; float d=uHead-u; if(d<0.0) discard;
+        float tail=exp(-d*5.0); float head=exp(-d*120.0); float pulse=0.6+0.4*sin(u*220.0-uTime*30.0);
+        vec3 c=mix(vec3(0.35,0.9,1.0), vec3(1.0,0.95,0.8), head)*(tail*pulse*1.6+head*6.0);
+        gl_FragColor=vec4(c*uAlpha,1.0); }`,
+  }));
+  rail.frustumCulled = false; rail.renderOrder = 5; rail.visible = false;
+  uni.scene.add(rail);
+  // two hold gems, anchored beside the throne's armrests
+  const holdAt = [V(-3.9, 4.6, 0.9), V(3.9, 4.6, 0.9)];
+  const holds = holdAt.map((_, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'hold ' + (i ? 'hold-r' : 'hold-l');
+    b.innerHTML = '<span class="hold-gem"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="hold-track" cx="32" cy="32" r="28"/><circle class="hold-fill" cx="32" cy="32" r="28"/></svg><i></i></span><span class="hold-txt"><b></b><small>Hold 3 s</small></span>';
+    document.body.appendChild(b);
+    return b;
+  });
+  const hold = { on: false, p: 0, last: performance.now() };   // timed by the wall clock, so 3 s is 3 s on any device
+  const setHoldText = () => holds.forEach((b) => { b.querySelector('b').textContent = world.drawn ? 'Return to reality' : 'Redraw the world'; b.setAttribute('aria-label', (world.drawn ? 'Hold to return to the real world' : 'Hold to redraw the world') + ' (3 seconds)'); });
+  setHoldText();
+  holds.forEach((b) => {
+    const start = (e) => { if (world.busy) return; e.preventDefault(); hold.on = true; b.classList.add('down'); if (e.pointerId !== undefined) b.setPointerCapture(e.pointerId); if (!toon.enabled) { toon.enabled = true; TU.uA.value = TU.uB.value = world.drawn ? 1 : 0; TU.uWipe.value = 1; } };
+    const stop = () => { hold.on = false; b.classList.remove('down'); };
+    b.addEventListener('pointerdown', start);
+    b.addEventListener('pointerup', stop); b.addEventListener('pointercancel', stop); b.addEventListener('lostpointercapture', stop);
+    b.addEventListener('contextmenu', (e) => e.preventDefault());
+    b.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) start(e); });
+    b.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') stop(); });
+  });
+  const toggle = document.getElementById('world-toggle');
+  const setToggle = () => { if (!toggle) return; toggle.hidden = !(world.drawn || sessionStorage.getItem('kaju-shifted')); toggle.querySelector('span').textContent = world.drawn ? '◐ Real world' : '◑ Drawn world'; };
+  if (toggle) { setToggle(); toggle.addEventListener('click', () => wipeTo(!world.drawn, 1.3)); }
+
+  // the wipe that redraws the world (or brings reality back)
+  function wipeTo(drawn, dur = 1.5) {
+    if (world.busy && !shift.active) return;
+    toon.enabled = true;
+    TU.uA.value = world.drawn ? 1 : 0; TU.uB.value = drawn ? 1 : 0; TU.uWipe.value = 0;
+    const st = { k: world.drawn ? 1 : 0 };
+    const tl = gsap.timeline({ onComplete: () => {
+      TU.uA.value = TU.uB.value = drawn ? 1 : 0; TU.uWipe.value = 1; TU.uGlitch.value = 0;
+      if (!drawn) toon.enabled = false;
+      world.drawn = drawn; sessionStorage.setItem('kaju-style', drawn ? 'drawn' : 'real'); sessionStorage.setItem('kaju-shifted', '1');
+      setHoldText(); setToggle();
+    } });
+    tl.to(TU.uGlitch, { value: 1, duration: 0.18, ease: 'power2.in' }, 0)
+      .to(TU.uGlitch, { value: 0.25, duration: 0.5 }, 0.2)
+      .to(TU.uWipe, { value: 1, duration: dur, ease: 'power2.inOut' }, 0.12)
+      .to(st, { k: drawn ? 1 : 0, duration: dur, ease: 'power1.inOut', onUpdate: () => applyWorld(st.k) }, 0.12)
+      .to(TU.uGlitch, { value: 0, duration: 0.4 }, dur * 0.8);
+    return tl;
+  }
+
+  function startShift() {
+    if (world.busy) return;
+    world.busy = true; hold.p = 0; hold.on = false; holds.forEach((b) => b.classList.remove('down'));
+    const target = !world.drawn;
+    lenis.stop(); uni.setInteractive(false); document.body.classList.add('shifting');
+    shift.active = true; shift.k = 0;
+    shift.from = cam.position.clone(); shift.tfrom = tgt.clone();
+    shift.a0 = Math.atan2(shift.from.x - C.x, shift.from.z - C.z);
+    rail.visible = true; railU.uAlpha.value = 1; railU.uHead.value = 0;
+    const tl = gsap.timeline({ onComplete: () => {
+      shift.active = false; world.busy = false;
+      lenis.start(); lenis.scrollTo(max(), { immediate: true, force: true }); sp = 1;
+      uni.setInteractive(true); document.body.classList.remove('shifting');
+      gsap.to(railU.uAlpha, { value: 0, duration: 1.2, onComplete: () => { rail.visible = false; } });
+    } });
+    tl.to(shift, { k: 1, duration: 7.2, ease: 'power1.inOut' }, 0)
+      .to(B.uSpeed, { value: 40, duration: 1.2, ease: 'power2.in' }, 0)
+      .to(B.uSpeed, { value: 2.4, duration: 2.5, ease: 'power2.out' }, 4.4)
+      .to(final.uniforms.uCA, { value: 0.008, duration: 0.8 }, 0)
+      .to(final.uniforms.uCA, { value: 0.0012, duration: 1.5 }, 3.5)
+      .add(() => wipeTo(target, 1.7), 1.15);
+  }
+
   function land(fast) {
     fly.active = true; fly.k = 0;
     B.uSpeed.value = 26;
@@ -108,6 +209,38 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
       bez(landFrom.pos, landMid.pos, p0, k, pos); bez(landFrom.tgt, landMid.tgt, t0, k, tgt);
       fov = 40 + (1 - k) * 18;
     }
+    // the shift flight: spin around the throne on the rail, rise up the tree, glide down to the signpost
+    if (shift.active) {
+      const k = shift.k, kA = clamp(k / 0.46), kB = clamp((k - 0.46) / 0.54);
+      if (k < 0.46) {
+        const e = kA * kA * (3 - 2 * kA);
+        const a = shift.a0 + e * Math.PI * 2 * 1.75;
+        const r = 10.5 - e * 2.2, yy = shift.from.y + (15 - shift.from.y) * e;
+        const helix = V(C.x + Math.sin(a) * r, yy, C.z + Math.cos(a) * r);
+        pos.copy(shift.from).lerp(helix, smooth(Math.min(1, kA * 5)));
+        tgt.copy(shift.tfrom).lerp(V(0, 7 + e * 6, 0), smooth(Math.min(1, kA * 4)));
+        railU.uHead.value = Math.min(0.58, e * 0.58 + 0.06);
+      } else {
+        if (!shift.up) {
+          shift.up = new THREE.CatmullRomCurve3([pos.clone(), V(4, 30, -2), V(1.5, 37, -9), V(0, 24, -18), KEYS[KEYS.length - 1].pos.clone()], false, 'centripetal');
+          shift.upT = new THREE.CatmullRomCurve3([tgt.clone(), V(0, 26, -6), V(0, 22, -24), V(0, 8, -40), KEYS[KEYS.length - 1].tgt.clone()], false, 'centripetal');
+        }
+        const e = kB * kB * (3 - 2 * kB);
+        shift.up.getPoint(e, pos); shift.upT.getPoint(e, tgt);
+        railU.uHead.value = 0.58 + Math.min(1, kB * 1.6) * 0.42;
+      }
+      fov = 46 + Math.sin(k * Math.PI) * 18;
+      if (k >= 1) { shift.up = null; }
+    }
+    railU.uTime.value = t;
+    // holding a gem charges the shift: a growing glitch and a rush on the timeline
+    if (!world.busy) {
+      const now = performance.now(), wdt = Math.min(0.25, (now - hold.last) / 1000); hold.last = now;
+      hold.p = hold.on ? Math.min(1, hold.p + wdt / 3) : Math.max(0, hold.p - wdt * 1.8);
+      if (toon.enabled && TU.uWipe.value >= 1) TU.uGlitch.value = Math.pow(hold.p, 2.2) * 0.55;
+      if (hold.p > 0) { B.uSpeed.value = 2.4 + hold.p * hold.p * 30; pos.x += (Math.random() - 0.5) * hold.p * 0.06; pos.y += (Math.random() - 0.5) * hold.p * 0.05; }
+      if (hold.p >= 1) startShift();
+    }
     // portal flight down a path
     if (trans.active) {
       const c = trans.path, L = c.getLength(), k = trans.k;
@@ -124,7 +257,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
     mouse.sx += (mouse.x - mouse.sx) * Math.min(1, dt * 2.5); mouse.sy += (mouse.y - mouse.sy) * Math.min(1, dt * 2.5);
     const dist = pos.distanceTo(tgt);
     right.subVectors(tgt, pos).cross(up).normalize();
-    const amp = Math.min(0.9, dist * 0.03) * (trans.active ? 0 : 1);
+    const amp = Math.min(0.9, dist * 0.03) * (trans.active || shift.active ? 0 : 1);
     pos.addScaledVector(right, mouse.sx * amp).addScaledVector(up, -mouse.sy * amp * 0.6);
     pos.y += Math.sin(t * 0.4) * 0.05;
     cam.position.copy(pos); cam.lookAt(tgt);
@@ -134,7 +267,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
 
   function dom(p, t, dt = 1 / 60) {
     const landed = !fly.active && fly.k >= 1;
-    const L = landed && !trans.active ? 1 : 0;
+    const L = landed && !trans.active && !shift.active ? 1 : 0;
     arrive.style.opacity = (L * (1 - seg(p, 0.01, 0.05))).toFixed(3);
     // Master of Timeline, floating over the throne
     const mv = L * win(p, 0.06, 0.12, 0.19, 0.24);
@@ -143,6 +276,16 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
     const ty = Math.max(mot.offsetHeight + innerHeight * 0.07, my - 10);
     mot.style.transform = `translate(${mx.toFixed(1)}px, ${(ty - (1 - mv) * 20).toFixed(1)}px) translate(-50%, -100%)`;
     mot.style.filter = mv < 1 ? `blur(${((1 - mv) * 8).toFixed(1)}px)` : 'none';
+    // hold gems beside the throne (same window as the title)
+    const hv = L * win(p, 0.07, 0.11, 0.2, 0.25);
+    holds.forEach((b, i) => {
+      const [x, y, z] = toScreen(holdAt[i]);
+      const vis = hv > 0.02 && z < 1;
+      b.classList.toggle('on', vis);
+      b.style.opacity = hv.toFixed(3);
+      b.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%)`;
+      b.style.setProperty('--p', hold.p.toFixed(4));
+    });
     treeLine.style.opacity = (L * win(p, 0.37, 0.43, 0.52, 0.57)).toFixed(3);
     const qv = L * seg(p, 0.79, 0.88);
     quote.style.opacity = qv.toFixed(3);
@@ -190,5 +333,5 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLa
     if (sp < 0.86) { scrollToP(1, 1.6); setTimeout(go, 1700); } else go();
   }
 
-  return { land, update, portal, resize() {}, state: { fly, trans }, get sp() { return sp; }, set sp(v) { sp = v; } };
+  return { land, update, portal, shift: startShift, wipeTo, world, resize() {}, state: { fly, trans, shift, hold }, get sp() { return sp; }, set sp(v) { sp = v; } };
 }

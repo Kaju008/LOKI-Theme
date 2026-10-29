@@ -53,7 +53,7 @@ export function createAtmosphere(tier) {
   geo.setAttribute('aS', new THREE.InstancedBufferAttribute(aS, 4));
   geo.instanceCount = N;
 
-  const uniforms = { uTime: { value: 0 }, uGain: { value: 1 } };
+  const uniforms = { uTime: { value: 0 }, uGain: { value: 1 }, uToon: { value: 0 } };
   const mat = new THREE.ShaderMaterial({
     uniforms, transparent: true, depthWrite: false,
     vertexShader: /* glsl */ `
@@ -73,20 +73,23 @@ export function createAtmosphere(tier) {
       }`,
     fragmentShader: /* glsl */ `
       ${NOISE}
-      uniform float uTime, uGain; varying vec2 vUv; varying vec4 vS; varying float vFade; varying vec3 vW;
+      uniform float uTime, uGain, uToon; varying vec2 vUv; varying vec4 vS; varying float vFade; varying vec3 vW;
       void main(){
         vec2 p=vUv-0.5; float r=length(p)*2.0;
         vec2 q=p*2.6+vS.y;
         float n=fbm(q + vec2(uTime*0.006, -uTime*0.004));
         float n2=fbm(q*1.9 - n*1.3 + 4.0);
         float blob=smoothstep(1.0, 0.15, r + (n-0.5)*0.9);
-        float dens=blob*smoothstep(0.32, 0.75, n*0.6+n2*0.55);
+        float dens=blob*smoothstep(mix(0.32, 0.2, uToon), mix(0.75, 0.55, uToon), n*0.6+n2*0.55);
         if(dens<0.004) discard;
         // dark dusty bodies with a faint coloured rim of light
         vec3 tint = vS.z<0.5 ? vec3(0.16,0.42,0.62) : vS.z<1.5 ? vec3(0.30,0.24,0.58) : vec3(0.14,0.50,0.40);
         float lit=smoothstep(0.45,0.95,n2) * (0.6+0.4*(1.0-r));
         vec3 col=vec3(0.012,0.016,0.03) + tint*lit*0.42;
-        float a=dens*vS.w*vFade*uGain*0.62;
+        // the drawn world: big puffy violet clouds, lit lavender on top
+        vec3 toonC = mix(vec3(0.2, 0.12, 0.52), vec3(0.58, 0.46, 1.0), clamp(lit * 1.3 + (0.5 - vUv.y) * 0.6, 0.0, 1.0));
+        col = mix(col, toonC, uToon);
+        float a=dens*vS.w*vFade*uGain*mix(0.62, 0.8, uToon);
         gl_FragColor=vec4(col, a);
       }`,
   });

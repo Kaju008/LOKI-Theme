@@ -18,7 +18,7 @@ let core;
 try { core = createRenderer(canvas, tier); }
 catch (e) { document.body.classList.remove('is-intro'); document.body.classList.add('live', 'no-gl'); $('#gate').classList.add('out'); console.error(e); }
 
-const { renderer, composer, renderPass, bloom, final, tunnel } = core || {};
+const { renderer, composer, renderPass, bloom, final, tunnel, toon } = core || {};
 const intro = createIntro(tier);
 // the brain floats in the upper half, the words sit below it (portrait screens pull back a little)
 const liftFor = () => { const tall = innerHeight / innerWidth > 1.2; intro.state.dist = tall ? 6.4 : 5.6; return tall ? 1.45 : 1.25; };
@@ -139,7 +139,7 @@ function enterUniverse(fast) {
   bloom.strength = 0.62; bloom.radius = 0.4; bloom.threshold = 1.0;
   lenis = new Lenis({ duration: 1.4, smoothWheel: true, wheelMultiplier: 0.85, touchMultiplier: 1.3 });
   lenis.stop();
-  story = createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, onLanded: () => { lenis.start(); uni.setInteractive(true); } });
+  story = createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon, onLanded: () => { lenis.start(); uni.setInteractive(true); } });
   story.land(fast);
   if (fast) gsap.to(final.uniforms.uFade, { value: 0, duration: 1.4, ease: 'power2.out' });
   setTimeout(() => $('#gate') && $('#gate').remove(), 1500);
@@ -166,6 +166,7 @@ function frame(now) {
     renderPass.scene = uni.scene; renderPass.camera = uni.camera;
   }
   final.uniforms.uTime.value = t;
+  if (toon) toon.uniforms.uTime.value = t;
   composer.render(dt);
 }
 requestAnimationFrame(frame);
