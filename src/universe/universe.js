@@ -8,6 +8,7 @@ import { createThrone, createRocks } from './props.js';
 import { createSignpost } from './signpost.js';
 import { createAtmosphere } from './atmos.js';
 import { createDrawn } from './drawn.js';
+import { STYLE, fadeInDrawn, drawnify } from './style.js';
 
 // =====================================================================
 //  The Universe — the Blender scene rebuilt live for the web.
@@ -72,6 +73,22 @@ export async function createUniverse(renderer, tier) {
   const drawn = createDrawn({ tier, planets }); scene.add(drawn.group);
   updaters.push((t, dt, cam) => drawn.update(t, cam));
   const FOG = scene.fog.density;
+
+  // ---- the drawn world: who changes, and how
+  const faded = new Set();
+  const fade = (m) => { if (m && m.isShaderMaterial && !faded.has(m)) { faded.add(m); fadeInDrawn(m); } };
+  sky.group.traverse((o) => { if (o.material && o.material.uniforms && o.material.uniforms.uSky) fade(o.material); });
+  atmos.group.traverse((o) => o.material && fade(o.material));
+  planets.forEach((p) => { fade(p.mat); if (p.shell) fade(p.shell.material); if (p.ringMesh) fade(p.ringMesh.material); });
+  const drawnMats = new Set();
+  const dz = (m, o) => { if (m && (m.isMeshStandardMaterial || m.isMeshPhysicalMaterial) && !drawnMats.has(m)) { drawnMats.add(m); drawnify(m, o); } };
+  throne.group.traverse((o) => o.isMesh && dz(o.material, { lift: 1.35, rim: 0.3 }));
+  rocks.rocks.forEach((r) => dz(r.mesh.material, { lift: 1.5, rim: 0.32 }));
+  sign.group.traverse((o) => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if (!m.map) dz(m, { lift: 1.1, rim: 0.4 }); }); });
+  bridge.group.traverse((o) => o.isMesh && dz(o.material, { lift: 1.2, rim: 0.35 }));
+  const dbs = new THREE.Vector2();
+  const setRes = () => { renderer.getDrawingBufferSize(dbs); STYLE.uDRes.value.copy(dbs); };
+  setRes();
 
   // ---- dust + shooting stars
   const motes = createMotes(tier); scene.add(motes.object);
@@ -151,20 +168,19 @@ export async function createUniverse(renderer, tier) {
 
   // =================== frame ===================
   function update(t, dt) {
+    STYLE.uDTime.value = t;
     sky.update(t, camera, 0);
     motes.uniforms.uTime.value = t; motes.uniforms.uCam.value.copy(camera.position);
     for (const u of updaters) u(t, dt, camera);
     hover();
   }
-  function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); bridge.resize(); }
+  function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); bridge.resize(); setRes(); }
 
   return {
     scene, camera, update, resize, bridge, tree, throne, rocks, planets, sky, sign, atmos, DECK_Y, PLAZA,
     // 0 = the real world, 1 = the drawn world (sky goes black, clouds go big and violet)
     setStyle(k) {
-      sky.skyU.uGain.value = 0.5 * (1 - k);                 // pitch-black sky
-      atmos.uniforms.uGain.value = 1 - k;                   // no fog, no haze in the drawn world
-      atmos.group.visible = k < 0.999;
+      atmos.group.visible = k < 0.999;                    // (sky, clouds and haze fade per pixel behind the wipe)
       scene.fog.density = FOG * (1 - k);
       drawn.set(k);
     },

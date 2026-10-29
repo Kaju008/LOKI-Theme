@@ -51,9 +51,11 @@ function boardTexture(b, w, h, tip) {
   g.font = `600 ${fs}px Cinzel, "Times New Roman", serif`;
   const label = b.label.toUpperCase().split('').join(' ');
   while (g.measureText(label).width > (w - tip - 1.0) * px && fs > 20) { fs -= 4; g.font = `600 ${fs}px Cinzel, "Times New Roman", serif`; }
+  g.lineWidth = fs * 0.045; g.strokeStyle = '#f6efe0'; g.lineJoin = 'round';
+  g.strokeText(label, bodyC, midY - h * px * 0.08);
   g.fillText(label, bodyC, midY - h * px * 0.08);
   g.shadowBlur = 0;
-  g.font = `500 ${Math.round(h * px * 0.12)}px Unbounded, system-ui, sans-serif`;
+  g.font = `600 ${Math.round(h * px * 0.125)}px Unbounded, system-ui, sans-serif`;
   g.fillStyle = b.col;
   g.fillText(b.sub.toUpperCase().split('').join(' '), bodyC, midY + h * px * 0.25);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;

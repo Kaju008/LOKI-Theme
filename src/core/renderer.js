@@ -135,52 +135,6 @@ const ToonShader = {
       vec3 hi = i < 1.0 ? b : i < 2.0 ? c : i < 3.0 ? d : e;
       return mix(lo, hi, f);
     }
-    // Kuwahara (4 quadrants): flattens detail into painted shapes while keeping edges
-    vec3 paint(vec2 uv, vec2 px){
-      vec3 m[4]; float v[4];
-      for (int q = 0; q < 4; q++) {
-        vec2 dir = vec2(q == 1 || q == 3 ? 1.0 : -1.0, q >= 2 ? 1.0 : -1.0);
-        vec3 sum = vec3(0.0), sq = vec3(0.0);
-        for (int j = 0; j < 3; j++) for (int i = 0; i < 3; i++) {
-          vec3 c = texture2D(tDiffuse, uv + dir * vec2(float(i), float(j)) * px * 1.15).rgb;
-          sum += c; sq += c * c;
-        }
-        sum /= 9.0; sq = sq / 9.0 - sum * sum;
-        m[q] = sum; v[q] = sq.r + sq.g + sq.b;
-      }
-      vec3 best = m[0]; float bv = v[0];
-      for (int q = 1; q < 4; q++) if (v[q] < bv) { bv = v[q]; best = m[q]; }
-      return best;
-    }
-    vec3 toon(vec2 uv){
-      vec2 px = 1.0 / uRes;
-      vec3 c = paint(uv, px);
-      float L = lum(c);
-      // soft ink outlines where the painted shapes meet
-      float l1 = lum(texture2D(tDiffuse, uv + vec2(px.x * 2.0, 0.0)).rgb), l2 = lum(texture2D(tDiffuse, uv - vec2(px.x * 2.0, 0.0)).rgb);
-      float l3 = lum(texture2D(tDiffuse, uv + vec2(0.0, px.y * 2.0)).rgb), l4 = lum(texture2D(tDiffuse, uv - vec2(0.0, px.y * 2.0)).rgb);
-      float edge = smoothstep(0.16, 0.42, length(vec2(l1 - l2, l3 - l4)));
-      // hue families: greens/teals → mint ramp, everything else → violet ramp, warm highlights → cream
-      float mx = max(c.r, max(c.g, c.b)) + 1e-4;
-      float green = smoothstep(0.02, 0.14, (c.g - max(c.r, c.b * 0.9)) / mx);
-      float warm = smoothstep(0.05, 0.25, (c.r - c.b) / mx) * smoothstep(0.3, 0.65, L);
-      float t = pow(L, 0.5) * 1.24;
-      float grain = vn(uv * uRes / 2.4) * 0.6 + h(uv * uRes) * 0.4;   // print grain dithers the band edges
-      t += (grain - 0.5) * 0.06;
-      vec3 vio = ramp5(t, vec3(0.008, 0.006, 0.02), vec3(0.13, 0.09, 0.3), vec3(0.33, 0.24, 0.68), vec3(0.6, 0.5, 0.94), vec3(0.88, 0.86, 1.0));
-      vec3 mint = ramp5(t, vec3(0.01, 0.02, 0.03), vec3(0.08, 0.2, 0.2), vec3(0.3, 0.56, 0.52), vec3(0.66, 0.9, 0.82), vec3(0.9, 0.99, 0.94));
-      vec3 cream = vec3(0.98, 0.93, 0.82);
-      vec3 col = mix(vio, mint, green);
-      col = mix(col, cream, warm * 0.5 * step(0.62, t));
-      // things already drawn in the style (saturated violets, mint rims) keep their own colour
-      float sat = (mx - min(c.r, min(c.g, c.b))) / mx;
-      float keep = smoothstep(0.38, 0.72, sat) * smoothstep(0.03, 0.12, L);
-      col = mix(col, c * 1.04, keep * 0.85);
-      col = mix(col, vec3(0.04, 0.03, 0.09), edge * 0.6);
-      col *= 0.94 + 0.08 * vn(uv * uRes / 1.5 + 7.0);
-      col += (h(uv * uRes + floor(uTime * 12.0)) - 0.5) * 0.025;
-      return col;
-    }
     void main(){
       vec2 uv = vUv;
       // whole-frame glitch: row tears and block jumps
@@ -191,15 +145,12 @@ const ToonShader = {
       // the wipe front: a diagonal sweep with a stepped digital edge
       float s = uv.x * 0.82 + (1.0 - uv.y) * 0.18 + (h(vec2(floor(uv.y * 64.0), 3.0)) - 0.5) * 0.035;
       float f = uWipe * 1.12 - 0.06;
-      float behind = step(s, f);
-      float amt = mix(uA, uB, behind);
       float band = 1.0 - smoothstep(0.0, 0.035, abs(s - f));
       band *= step(0.001, abs(uB - uA)) * step(0.001, uWipe) * step(uWipe, 0.999);
       // RGB split at the edge and while glitching
       float split = (band * 0.012 + uGlitch * 0.006);
       vec3 real = vec3(texture2D(tDiffuse, uv + vec2(split, 0.0)).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - vec2(split, 0.0)).b);
       vec3 col = real;
-      if (amt > 0.001) col = mix(real, toon(uv), amt);
       // a bright mint scan line rides the front
       col += vec3(0.55, 1.0, 0.85) * band * (0.55 + 0.45 * h(vec2(floor(uv.y * 120.0), floor(uTime * 30.0))));
       gl_FragColor = vec4(col, 1.0);

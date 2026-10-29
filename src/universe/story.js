@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createForeground } from './foreground.js';
 
 // =====================================================================
 //  The story: one continuous camera, driven by scroll.
@@ -83,13 +84,14 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
   // Hold a gem beside the throne for 3 s → glitch, the camera spins around the throne on a light
   // rail, rises up the tree while a wipe redraws the world, then glides down to the signpost.
   const TU = toon.uniforms;
+  const fg = createForeground();
   const world = { drawn: false, busy: false };
   const shift = { active: false, k: 0, from: null, tfrom: null, a0: 0 };
   const BLOOM_REAL = bloom.strength, BLOOM_DRAWN = 0.3;
   const C = V(0, 6.2, 0);                                   // the throne
   function applyWorld(k) { uni.setStyle(k); bloom.strength = BLOOM_REAL + (BLOOM_DRAWN - BLOOM_REAL) * k; }
   if (sessionStorage.getItem('kaju-style') === 'drawn') {
-    world.drawn = true; toon.enabled = true; TU.uA.value = TU.uB.value = 1; TU.uWipe.value = 1; applyWorld(1);
+    world.drawn = true; TU.uA.value = TU.uB.value = 1; TU.uWipe.value = 1; applyWorld(1);
   }
   // the light rail: two fast loops around the throne, then a spiral up the trunk into the crown
   const railPts = [];
@@ -145,7 +147,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
     const st = { k: world.drawn ? 1 : 0 };
     const tl = gsap.timeline({ onComplete: () => {
       TU.uA.value = TU.uB.value = drawn ? 1 : 0; TU.uWipe.value = 1; TU.uGlitch.value = 0;
-      if (!drawn) toon.enabled = false;
+      toon.enabled = false;
       world.drawn = drawn; sessionStorage.setItem('kaju-style', drawn ? 'drawn' : 'real'); sessionStorage.setItem('kaju-shifted', '1');
       setHoldText(); setToggle();
     } });
@@ -307,6 +309,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
       b.style.transform = `translate(${x0.toFixed(1)}px, ${y0.toFixed(1)}px)`;
       b.style.width = `${(x1 - x0).toFixed(1)}px`; b.style.height = `${(y1 - y0).toFixed(1)}px`;
     });
+    fg.update(t, dt, L * seg(p, 0.8, 0.94));
     railFill.style.transform = `scaleY(${p.toFixed(4)})`;
     const act = p < 0.12 ? 0 : p < 0.33 ? 1 : p < 0.77 ? 2 : 3;
     railLinks.forEach((a, k) => a.classList.toggle('on', k === act));

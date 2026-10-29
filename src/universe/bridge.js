@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { HASH } from '../core/glsl.js';
+import { STYLE, DRAWN_GLSL, linkStyle } from './style.js';
 
 // =====================================================================
 //  The Timeline Bridge
@@ -59,6 +60,10 @@ function ribbon(curve, width, step = 2.0, lift = 0) {
 
 const TIMELINE_FRAG = /* glsl */ `
   ${HASH}
+  ${DRAWN_GLSL}
+  vec3 dPal(float k){ k=fract(k)*6.0;
+    return k<1.0?dLin(vec3(0.498,0.941,0.812)):k<2.0?dLin(vec3(0.647,0.545,1.0)):k<3.0?dLin(vec3(0.416,0.659,1.0)):
+           k<4.0?dLin(vec3(0.941,0.545,0.816)):k<5.0?dLin(vec3(0.780,0.722,1.0)):dLin(vec3(0.384,0.851,0.910)); }
   uniform float uTime, uFlow, uSpeed, uBoost, uW;
   varying vec2 vUV; varying vec3 vW;
   float sdBox(vec2 p, vec2 b, float r){ vec2 q=abs(p)-b+r; return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r; }
@@ -81,6 +86,7 @@ const TIMELINE_FRAG = /* glsl */ `
     float side=sign(x); float ax=abs(x);
     float row=floor((ax-0.52)/0.74); float rv=(ax-0.52)-row*0.74;      // row index 0..3, local 0..0.74
     bool inRow = ax>0.52 && row>=0.0 && row<4.0 && rv<0.64;
+    float dB=0.0; vec3 dC=vec3(0.0);
     float vv=rv-0.32;                                                   // -0.32..0.32 across the row
     if(inRow){
       float C=7.0+row*1.7;                                              // cell length per track
@@ -94,6 +100,8 @@ const TIMELINE_FRAG = /* glsl */ `
       float body=(1.0-smoothstep(-aa, aa, d))*has;
       float edge=(1.0-smoothstep(0.0, aa*2.0+0.01, abs(d)))*has;
       float lx=f-a0;                                                    // position inside the clip
+      dB=(1.0-smoothstep(-aa, aa, sdBox(vec2(f-mid, vv), vec2(hl, 0.3), 0.02)))*has;
+      dC = side<0.0 ? dPal(row*0.37+hid*0.9) : (row<2.0 ? dLin(vec3(0.373,0.851,0.722)) : dLin(vec3(0.498,0.890,0.784)));
       if(side<0.0){
         // VIDEO LAYER — coloured clip with filmstrip thumbnails
         vec3 c=vidCol(row*0.25+hid*0.5);
@@ -150,11 +158,22 @@ const TIMELINE_FRAG = /* glsl */ `
     float far=smoothstep(900.0, 120.0, dist);
     float lod=mix(0.45,1.0,smoothstep(260.0,30.0,dist));
     col*=uBoost*far*lod;
+    float k_=drawnK();
+    if(k_>0.0){
+      vec3 dcol=dLin(vec3(0.078,0.063,0.204));
+      dcol=mix(dcol, dC*(side<0.0?0.85:0.62), dB);
+      float dash=step(fract(sp*0.5),0.06)*(1.0-smoothstep(0.1,0.14,ax));
+      dcol+=dLin(vec3(0.94,1.0,0.97))*dash*0.6;
+      float fd=pow(clamp(1.0-(dist-22.0)/330.0,0.0,1.0),2.1);
+      dcol*=fd*(0.94+0.1*dGrain());
+      col=mix(col,dcol,k_);
+    }
     gl_FragColor=vec4(col,1.0);
   }`;
 
 const PLAZA_FRAG = /* glsl */ `
   ${HASH}
+  ${DRAWN_GLSL}
   uniform float uTime, uBoost, uR; varying vec3 vW;
   void main(){
     vec2 p=vW.xz-vec2(0.0, ${PLAZA.c.z.toFixed(2)});
@@ -180,13 +199,27 @@ const PLAZA_FRAG = /* glsl */ `
     float sw=fract(a/6.2831853 - uTime*0.04);
     col+=vec3(1.0,0.35,0.25)*smoothstep(0.985,1.0,sw)*smoothstep(uR,1.5,r)*0.9;
     col*=smoothstep(uR+0.1, uR-0.3, r)*uBoost;
+    float k_=drawnK();
+    if(k_>0.0){
+      vec3 dcol=dLin(vec3(0.078,0.063,0.204));
+      dcol+=dLin(vec3(0.70,0.66,0.94))*ring*0.18*step(2.0,r);
+      for(int i=0;i<4;i++){ float fi=float(i); float rr=3.2+fi*1.9;
+        float w=1.0-smoothstep(0.26, 0.26+aa, abs(r-rr));
+        float ang=fract((a/6.2831853)+uTime*(0.006+fi*0.004)*(mod(fi,2.0)*2.0-1.0));
+        float cid=floor(ang*(8.0+fi*3.0)); float cf=fract(ang*(8.0+fi*3.0));
+        float on=step(0.25,h11(cid+fi*13.0))*step(0.06,cf)*step(cf,0.86);
+        vec3 c=mix(dLin(vec3(0.647,0.545,1.0)), dLin(vec3(0.498,0.941,0.812)), fi/3.0);
+        dcol=mix(dcol, c*0.8, w*on); }
+      dcol*=smoothstep(uR+0.1, uR-0.3, r)*(0.94+0.1*dGrain());
+      col=mix(col,dcol,k_);
+    }
     gl_FragColor=vec4(col,1.0);
   }`;
 
 export function createTimelineBridge({ tier, env }) {
   const group = new THREE.Group();
   const paths = makePaths();
-  const uniforms = { uTime: { value: 0 }, uFlow: { value: 1 }, uSpeed: { value: 2.4 }, uBoost: { value: 1 }, uW: { value: WIDTH }, uR: { value: PLAZA.r } };
+  const uniforms = { uTime: { value: 0 }, uFlow: { value: 1 }, uSpeed: { value: 2.4 }, uBoost: { value: 1 }, uW: { value: WIDTH }, uR: { value: PLAZA.r }, ...STYLE };
 
   const vert = `attribute vec2 aUV; varying vec2 vUV; varying vec3 vW; void main(){ vUV=aUV; vec4 w=modelMatrix*vec4(position,1.0); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`;
   const tlMat = new THREE.ShaderMaterial({ uniforms, vertexShader: vert, fragmentShader: TIMELINE_FRAG, extensions: { derivatives: true } });
@@ -224,6 +257,7 @@ export function createTimelineBridge({ tier, env }) {
       }`,
     fragmentShader: /* glsl */ `
       ${HASH}
+      ${DRAWN_GLSL}
       uniform sampler2D tDiffuse; uniform float uTime, uMirror; varying vec4 vUv; varying vec3 vW;
       #include <logdepthbuf_pars_fragment>
       void main(){
@@ -242,6 +276,7 @@ export function createTimelineBridge({ tier, env }) {
         seam*=smoothstep(140.0,10.0,dist);
         vec3 col=refl*(0.18+fres*0.75) + vec3(0.55,0.8,1.0)*seam*0.06;
         float alpha=clamp(0.12+fres*0.55+seam*0.1, 0.0, 0.92);
+        float k_=drawnK(); col*=1.0-0.85*k_; alpha*=1.0-0.75*k_;
         gl_FragColor=vec4(col, alpha);
       }`,
   };
@@ -253,6 +288,7 @@ export function createTimelineBridge({ tier, env }) {
     const m = new THREE.ShaderMaterial({ ...glassShader, uniforms: { ...glassShader.uniforms, tDiffuse: { value: new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1) }, textureMatrix: { value: new THREE.Matrix4() } }, transparent: true, depthWrite: false, extensions: { derivatives: true } });
     glass = new THREE.Mesh(merged, m);
   }
+  linkStyle(glass.material);
   glass.rotation.x = -Math.PI / 2; glass.position.y = DECK_Y; glass.renderOrder = 3;
   group.add(glass);
   // an invisible depth deck so particles/roots sit "on" the glass

@@ -56,15 +56,16 @@ export function createPlanet({ map, radius = 100, atmo = new THREE.Color(0.3, 0.
   axis.add(body);
 
   // outer glow just beyond the limb
+  let shellMesh = null;
   if (atmoK > 0) {
-    const shell = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.035, 96, 48), new THREE.ShaderMaterial({
+    shellMesh = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.035, 96, 48), new THREE.ShaderMaterial({
       uniforms: { uSun: { value: SUN_DIR }, uAtmo: { value: atmo }, uK: { value: atmoK } }, transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false,
       vertexShader: VERT,
       fragmentShader: `uniform vec3 uSun,uAtmo; uniform float uK; varying vec3 vN; varying vec3 vW;
         void main(){ vec3 V=normalize(cameraPosition-vW); float f=pow(max(0.0,1.0-abs(dot(normalize(vN),V))),1.6)*smoothstep(0.0,0.35,abs(dot(normalize(vN),V)));
           float l=smoothstep(-0.35,0.5,dot(normalize(vN),uSun)); gl_FragColor=vec4(uAtmo*f*l*uK*0.9,1.0); }`,
     }));
-    axis.add(shell);
+    axis.add(shellMesh);
   }
 
   let ringMesh = null;
@@ -95,7 +96,7 @@ export function createPlanet({ map, radius = 100, atmo = new THREE.Color(0.3, 0.
   const state = { spin, hover: 0, target: 0, vel: new THREE.Vector2(), drag: false };
   const tmpN = new THREE.Vector3(), tmpC = new THREE.Vector3(), q = new THREE.Quaternion();
   return {
-    group, axis, body, mat, state, radius,
+    group, axis, body, mat, state, radius, ringMesh, shell: shellMesh,
     update(t, dt) {
       body.rotation.y += state.spin * dt;
       if (!state.drag && state.vel.lengthSq() > 1e-8) {

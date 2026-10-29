@@ -5,6 +5,7 @@ import { detectTier, createRenderer } from './core/renderer.js';
 import { createIntro } from './intro/brain.js';
 import { createUniverse } from './universe/universe.js';
 import { createStory, PAGES } from './universe/story.js';
+import { STYLE } from './universe/style.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -19,6 +20,8 @@ try { core = createRenderer(canvas, tier); }
 catch (e) { document.body.classList.remove('is-intro'); document.body.classList.add('live', 'no-gl'); $('#gate').classList.add('out'); console.error(e); }
 
 const { renderer, composer, renderPass, bloom, final, tunnel, toon } = core || {};
+// the post pass draws the wipe line where the materials switch worlds
+if (toon) { toon.uniforms.uA = STYLE.uDFrom; toon.uniforms.uB = STYLE.uDTo; toon.uniforms.uWipe = STYLE.uDFront; }
 const intro = createIntro(tier);
 // the brain floats in the upper half, the words sit below it (portrait screens pull back a little)
 const liftFor = () => { const tall = innerHeight / innerWidth > 1.2; intro.state.dist = tall ? 6.4 : 5.6; return tall ? 1.45 : 1.25; };

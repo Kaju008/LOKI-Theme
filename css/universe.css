@@ -116,3 +116,12 @@ body.uni .gate-kicker { display: none; }
 body.shifting .hold, body.shifting #mot { visibility: hidden; }
 @media (max-width: 700px) { .hold-gem { width: 48px; height: 48px; } .hold-txt b { font-size: 8.5px; letter-spacing: .16em; } .hold-txt small { font-size: 8px; } .hold { gap: 8px; } }
 #world-toggle[hidden] { display: none !important; }
+
+/* ---------- foreground: drifting out-of-focus asteroids + the drawn world's corner clouds ---------- */
+.fg { position: fixed; inset: 0; z-index: 3; pointer-events: none; visibility: hidden; }
+.fg-layer { position: absolute; inset: 0; overflow: hidden; }
+.fg-rock { position: absolute; left: 0; top: 0; object-fit: contain; will-change: transform; }
+.fg-cloud { position: absolute; bottom: -2px; width: min(34vw, 560px); }
+.fg-cloud.l { left: -2vw; } .fg-cloud.r { right: -2vw; }
+@media (max-width: 700px) { .fg-cloud { width: 56vw; } }
+body.leaving .fg, body.shifting .fg { opacity: 0 !important; }
