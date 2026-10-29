@@ -19,15 +19,17 @@ const smooth = (x) => x * x * (3 - 2 * x);
 
 // camera keys along the scroll (three.js coords; deck at y = 1.5)
 const KEYS = [
-  { p: 0.0, pos: V(0, 9.6, 46), tgt: V(0, 7.6, 0), fov: 40 },       // arrival: the whole universe
-  { p: 0.13, pos: V(0, 6.6, 19.5), tgt: V(0, 8.4, 0), fov: 38 },      // the throne — Master of Timeline
-  { p: 0.24, pos: V(6.5, 7.2, 10.5), tgt: V(0, 7.5, -2), fov: 38 },   // beside the throne, the tree behind
-  { p: 0.36, pos: V(8.2, 12.5, 2.5), tgt: V(0, 14.5, -6.5), fov: 42 },// rising along the trunk
-  { p: 0.48, pos: V(5.5, 22.5, -0.5), tgt: V(0, 24, -7), fov: 46 },   // into the crown
-  { p: 0.59, pos: V(1.5, 33, -5.5), tgt: V(0, 29, -16), fov: 50 },    // over the top
-  { p: 0.7, pos: V(-2.5, 28, -15), tgt: V(0, 10, -42), fov: 48 },     // turning 180°
-  { p: 0.83, pos: V(0, 22, -12), tgt: V(0, 3, -58), fov: 50 },     // the road forks in three
-  { p: 1.0, pos: V(0, 7.4, -22.5), tgt: V(0, 7.9, -46), fov: 50 },  // the signpost at the fork
+  { p: 0.0, pos: V(0, 46, 70), tgt: V(0, 1.5, 38), fov: 50 },       // arrival: a top-down aerial over the timeline field
+  { p: 0.07, pos: V(0, 24, 48), tgt: V(0, 3.5, 14), fov: 44 },      // dropping toward the bridge
+  { p: 0.12, pos: V(0, 6.4, 31), tgt: V(0, 6.6, 0), fov: 40 },      // low over the glass, gliding toward the throne
+  { p: 0.18, pos: V(0, 6.6, 19.5), tgt: V(0, 8.4, 0), fov: 38 },    // the throne — Master of Timeline
+  { p: 0.28, pos: V(6.5, 7.2, 10.5), tgt: V(0, 7.5, -2), fov: 38 },  // beside the throne, the tree behind
+  { p: 0.39, pos: V(8.2, 12.5, 2.5), tgt: V(0, 14.5, -6.5), fov: 42 },// rising along the trunk
+  { p: 0.5, pos: V(5.5, 22.5, -0.5), tgt: V(0, 24, -7), fov: 46 },   // into the crown
+  { p: 0.6, pos: V(1.5, 33, -5.5), tgt: V(0, 29, -16), fov: 50 },    // over the top
+  { p: 0.71, pos: V(-2.5, 28, -15), tgt: V(0, 10, -42), fov: 48 },   // turning 180°
+  { p: 0.84, pos: V(0, 22, -12), tgt: V(0, 3, -58), fov: 50 },       // the road forks in three
+  { p: 1.0, pos: V(0, 7.4, -22.5), tgt: V(0, 7.9, -46), fov: 50 },   // the signpost at the fork
 ];
 
 export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon, onLanded }) {
@@ -51,7 +53,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
   const boards = [...document.querySelectorAll('.board')];
   const railFill = $('#rail-fill'), railLinks = [...document.querySelectorAll('.beats-rail a')];
   const beats = ['b-arrive', 'b-throne', 'b-tree', 'b-paths'].map((id) => document.getElementById(id));
-  const beatP = [0, 0.13, 0.36, 0.83];
+  const beatP = [0, 0.18, 0.39, 0.84];
   railLinks.forEach((a, k) => a.addEventListener('click', () => scrollToP(beatP[k])));
   boards.forEach((b) => {
     b.addEventListener('click', () => portal(+b.dataset.portal));
@@ -72,7 +74,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
   // ---------------- state
   let sp = 0;                     // smoothed scroll progress
   const fly = { k: 1, active: false };
-  const landFrom = { pos: V(0, 260, 430), tgt: V(0, 1.5, 418) }, landMid = { pos: V(0, 64, 150), tgt: V(0, 3, 96) };
+  const landFrom = { pos: V(0, 260, 430), tgt: V(0, 1.5, 418) }, landMid = { pos: V(0, 120, 190), tgt: V(0, 1.5, 120) };
   const trans = { active: false, k: 0, path: null };
   const B = uni.bridge.uniforms;
   let lockY = false;
@@ -183,11 +185,11 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
     B.uSpeed.value = 26;
     const pathsOnly = sessionStorage.getItem('kaju-paths') === '1';
     sessionStorage.removeItem('kaju-paths');
-    gsap.to(fly, { k: 1, duration: fast ? 3.0 : 5.2, ease: 'power2.inOut', onComplete: () => {
+    gsap.to(fly, { k: 1, duration: fast ? 2.2 : 2.6, ease: 'power2.inOut', onComplete: () => {
       fly.active = false; onLanded();
       if (pathsOnly) requestAnimationFrame(() => { lenis.scrollTo(max(), { immediate: true }); sp = 1; });
     } });
-    gsap.to(B.uSpeed, { value: 2.4, duration: fast ? 3.2 : 5.6, ease: 'power3.out' });
+    gsap.to(B.uSpeed, { value: 2.4, duration: fast ? 2.6 : 3.0, ease: 'power3.out' });
   }
 
   const bez = (a, b, c, t, out) => out.set(0, 0, 0).addScaledVector(a, (1 - t) * (1 - t)).addScaledVector(b, 2 * (1 - t) * t).addScaledVector(c, t * t);
@@ -207,7 +209,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
       const k = fly.k;
       const p0 = KEYS[0].pos, t0 = KEYS[0].tgt;
       bez(landFrom.pos, landMid.pos, p0, k, pos); bez(landFrom.tgt, landMid.tgt, t0, k, tgt);
-      fov = 40 + (1 - k) * 18;
+      fov = 46 + (1 - k) * 14;
     }
     // the shift flight: spin around the throne on the rail, rise up the tree, glide down to the signpost
     if (shift.active) {
@@ -270,14 +272,14 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
     const L = landed && !trans.active && !shift.active ? 1 : 0;
     arrive.style.opacity = (L * (1 - seg(p, 0.01, 0.05))).toFixed(3);
     // Master of Timeline, floating over the throne
-    const mv = L * win(p, 0.06, 0.12, 0.19, 0.24);
+    const mv = L * win(p, 0.14, 0.18, 0.25, 0.29);
     const [mx, my] = toScreen(throneTop);
     mot.style.opacity = mv.toFixed(3);
     const ty = Math.max(mot.offsetHeight + innerHeight * 0.07, my - 10);
     mot.style.transform = `translate(${mx.toFixed(1)}px, ${(ty - (1 - mv) * 20).toFixed(1)}px) translate(-50%, -100%)`;
     mot.style.filter = mv < 1 ? `blur(${((1 - mv) * 8).toFixed(1)}px)` : 'none';
     // hold gems beside the throne (same window as the title)
-    const hv = L * win(p, 0.07, 0.11, 0.2, 0.25);
+    const hv = L * win(p, 0.15, 0.18, 0.25, 0.29);
     holds.forEach((b, i) => {
       const [x, y, z] = toScreen(holdAt[i]);
       const vis = hv > 0.02 && z < 1;
@@ -286,7 +288,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
       b.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%)`;
       b.style.setProperty('--p', hold.p.toFixed(4));
     });
-    treeLine.style.opacity = (L * win(p, 0.37, 0.43, 0.52, 0.57)).toFixed(3);
+    treeLine.style.opacity = (L * win(p, 0.4, 0.45, 0.53, 0.58)).toFixed(3);
     const qv = L * seg(p, 0.79, 0.88);
     quote.style.opacity = qv.toFixed(3);
     quote.style.filter = qv < 1 ? `blur(${((1 - qv) * 8).toFixed(1)}px)` : 'none';
@@ -306,7 +308,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
       b.style.width = `${(x1 - x0).toFixed(1)}px`; b.style.height = `${(y1 - y0).toFixed(1)}px`;
     });
     railFill.style.transform = `scaleY(${p.toFixed(4)})`;
-    const act = p < 0.08 ? 0 : p < 0.3 ? 1 : p < 0.76 ? 2 : 3;
+    const act = p < 0.12 ? 0 : p < 0.33 ? 1 : p < 0.77 ? 2 : 3;
     railLinks.forEach((a, k) => a.classList.toggle('on', k === act));
   }
 

@@ -36,6 +36,8 @@ const loadBar = $('#load-bar');
 THREE.DefaultLoadingManager.onProgress = (u, l, t) => { loadBar.style.transform = `scaleX(${Math.max(l / t, 0.12)})`; };
 const ready = (async () => { await wait(60); const u = await createUniverse(renderer, tier); loadBar.style.transform = 'scaleX(1)'; return u; })();
 ready.then((u) => { uni = u; }).catch((e) => console.error('universe', e));
+let warmed = Promise.resolve();
+ready.then((u) => { warmed = prewarm(u); }).catch(() => {});
 
 async function prewarm(w) {
   const vis = []; w.scene.traverse((o) => { if (!o.visible) { vis.push(o); o.visible = true; } });
@@ -95,37 +97,36 @@ async function begin(skip = false) {
     if (final) final.uniforms.uFade.value = 1;
     let w;
     try { w = await ready; } catch (e) { return failed(e); }
-    await prewarm(w);
+    await warmed;
     enterUniverse(true);
     return;
   }
   const U = intro.uniforms, S = intro.state, T = tunnel.uniforms, cap = $('#intro-caption');
   gsap.to(U.uForm, { value: 1, duration: 0.8, ease: 'power2.out' });
+  // the whole dive is ~2.5 s: spin up (0.9 s) → burst → into the wormhole → open onto the bridge
   const tl = gsap.timeline();
-  tl.to(S, { orbit: 0, duration: 1.2, ease: 'power2.inOut' }, 0)
-    .to(S, { lift: 0, duration: 1.6, ease: 'power2.inOut' }, 0)
-    .to(S, { spin: 26, duration: 2.0, ease: 'power3.in' }, 0)                     // spins faster and faster
-    .to(U.uBurst, { value: 1, duration: 2.3, ease: 'power2.in' }, 1.35)           // …and bursts into millions of particles
-    .to(S, { dist: 0.35, duration: 2.6, ease: 'power3.in' }, 1.1)                 // the camera dives into the particles
-    .to(intro.camera, { fov: 84, duration: 2.4, ease: 'power2.in', onUpdate: () => intro.camera.updateProjectionMatrix() }, 1.3)
-    .to(intro.warp.uWarp, { value: 1, duration: 1.5, ease: 'power2.in' }, 1.9)
-    .add(() => { tunnel.enabled = true; }, 2.3)
-    .to(T.uIn, { value: 1, duration: 1.3, ease: 'power2.in' }, 2.3)               // into the wormhole
-    .to(T.uBlur, { value: 1, duration: 1.3, ease: 'power2.in' }, 2.3)
-    .to(tun, { speed: 1.4, duration: 2.2, ease: 'power2.in' }, 2.0)
-    .to(final.uniforms.uCA, { value: 0.009, duration: 1.4 }, 2.3)
-    .add(() => cap.classList.add('on'), 3.1);
+  tl.to(S, { orbit: 0, duration: 0.5, ease: 'power2.inOut' }, 0)
+    .to(S, { lift: 0, duration: 0.7, ease: 'power2.inOut' }, 0)
+    .to(S, { spin: 26, duration: 0.9, ease: 'power3.in' }, 0)                     // spins faster and faster
+    .to(U.uBurst, { value: 1, duration: 0.9, ease: 'power2.in' }, 0.45)           // …and bursts into millions of particles
+    .to(S, { dist: 0.35, duration: 1.0, ease: 'power3.in' }, 0.4)                 // the camera dives into the particles
+    .to(intro.camera, { fov: 84, duration: 0.9, ease: 'power2.in', onUpdate: () => intro.camera.updateProjectionMatrix() }, 0.45)
+    .to(intro.warp.uWarp, { value: 1, duration: 0.6, ease: 'power2.in' }, 0.7)
+    .add(() => { tunnel.enabled = true; }, 0.9)
+    .to(T.uIn, { value: 1, duration: 0.5, ease: 'power2.in' }, 0.9)               // into the wormhole
+    .to(T.uBlur, { value: 1, duration: 0.5, ease: 'power2.in' }, 0.9)
+    .to(tun, { speed: 1.4, duration: 0.8, ease: 'power2.in' }, 0.7)
+    .to(final.uniforms.uCA, { value: 0.009, duration: 0.5 }, 0.9);
   await tl.then();
   let w;
-  try { w = await ready; } catch (e) { return failed(e); }
-  await Promise.all([prewarm(w), wait(1500)]);                                       // …deep through the galaxies
+  try { w = await ready; } catch (e) { return failed(e); }                       // (only waits if the download isn't done yet)
+  await warmed;
   enterUniverse(false);
   const ex = gsap.timeline();
-  ex.add(() => cap.classList.remove('on'), 0.4)
-    .to(T.uOpen, { value: 1, duration: 2.4, ease: 'power2.inOut' }, 0.2)
-    .to(T.uBlur, { value: 0, duration: 2.2, ease: 'power2.out' }, 0.4)
-    .to(tun, { speed: 0.12, duration: 2.4, ease: 'power2.out' }, 0.1)
-    .to(final.uniforms.uCA, { value: 0.0012, duration: 2.0 }, 0.5);
+  ex.to(T.uOpen, { value: 1, duration: 1.1, ease: 'power2.inOut' }, 0)
+    .to(T.uBlur, { value: 0, duration: 1.0, ease: 'power2.out' }, 0.1)
+    .to(tun, { speed: 0.12, duration: 1.1, ease: 'power2.out' }, 0)
+    .to(final.uniforms.uCA, { value: 0.0012, duration: 1.0 }, 0.2);
   await ex.then();
   tunnel.enabled = false;
 }
