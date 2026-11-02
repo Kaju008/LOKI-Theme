@@ -10,6 +10,7 @@ import { createAtmosphere } from './atmos.js';
 import { createDrawn } from './drawn.js';
 import { STYLE, fadeInDrawn, drawnify, portalRadius } from './style.js';
 import { createPortalFx } from './portal.js';
+import { createRealm } from './realm.js';
 
 // =====================================================================
 //  The Universe — the Blender scene rebuilt live for the web.
@@ -47,6 +48,10 @@ export async function createUniverse(renderer, tier) {
   const bridge = createTimelineBridge({ tier, env });
   scene.add(bridge.group);
   updaters.push((t, dt) => bridge.update(t, dt));
+  // ---- the realm under and around the bridge: thick stone body, islands, waterfalls, Asgard citadels, mist
+  const realm = createRealm({ tier, env, paths: bridge.paths, loader });
+  scene.add(realm.group);
+  updaters.push((t) => realm.update(t));
 
   // ---- throne, tree, rocks (exported from Blender)
   const [throne, tree, rocks, sign] = await Promise.all([createThrone({ env, tier }), createTree({ tier }), createRocks({ env, tier }), createSignpost({ env })]);
@@ -88,6 +93,8 @@ export async function createUniverse(renderer, tier) {
   rocks.rocks.forEach((r) => dz(r.mesh.material, { lift: 1.5, rim: 0.32 }));
   sign.group.traverse((o) => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if (!m.map) dz(m, { lift: 1.1, rim: 0.4 }); }); });
   bridge.group.traverse((o) => o.isMesh && dz(o.material, { lift: 1.2, rim: 0.35 }));
+  realm.stdMats.forEach((m) => dz(m, { lift: 1.25, rim: 0.3 }));
+  realm.shaderMats.forEach(fade);
   const dbs = new THREE.Vector2();
   const setRes = () => { renderer.getDrawingBufferSize(dbs); STYLE.uDRes.value.copy(dbs); };
   setRes();

@@ -134,7 +134,8 @@ export function drawnify(mat, { rim = 0.28, lift = 1.25, keepEmissive = 0.7 } = 
           }
           gl_FragColor.rgb += dRimGlow(); }`);
   };
-  const key = `drawn|${rim}|${lift}|${keepEmissive}|${prev ? prev.toString().length : 0}`;
+  const pk = mat.customProgramCacheKey && mat.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? mat.customProgramCacheKey() : '';
+  const key = `drawn|${rim}|${lift}|${keepEmissive}|${prev ? prev.toString().length : 0}|${pk}`;
   mat.customProgramCacheKey = () => key;
   mat.needsUpdate = true;
   return mat;

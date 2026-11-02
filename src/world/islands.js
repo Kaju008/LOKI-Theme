@@ -9,7 +9,7 @@ import { makeNoise } from '../core/glsl.js';
 // Geometry is generated once per archetype and shared.
 // ---------------------------------------------------------------------
 const GEO = new Map();
-function islandGeometry(seed, detail) {
+export function islandGeometry(seed, detail) {
   const key = seed + ':' + detail;
   if (GEO.has(key)) return GEO.get(key);
   const n = makeNoise(seed);
