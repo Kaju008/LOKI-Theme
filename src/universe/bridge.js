@@ -168,7 +168,7 @@ const TIMELINE_FRAG = /* glsl */ `
       dcol*=fd*(0.94+0.1*dGrain());
       col=mix(col,dcol,k_);
     }
-    gl_FragColor=vec4(col,1.0);
+    gl_FragColor=vec4(col + dRimGlow(),1.0);
   }`;
 
 const PLAZA_FRAG = /* glsl */ `
@@ -213,7 +213,7 @@ const PLAZA_FRAG = /* glsl */ `
       dcol*=smoothstep(uR+0.1, uR-0.3, r)*(0.94+0.1*dGrain());
       col=mix(col,dcol,k_);
     }
-    gl_FragColor=vec4(col,1.0);
+    gl_FragColor=vec4(col + dRimGlow(),1.0);
   }`;
 
 export function createTimelineBridge({ tier, env }) {
@@ -277,7 +277,7 @@ export function createTimelineBridge({ tier, env }) {
         vec3 col=refl*(0.18+fres*0.75) + vec3(0.55,0.8,1.0)*seam*0.06;
         float alpha=clamp(0.12+fres*0.55+seam*0.1, 0.0, 0.92);
         float k_=drawnK(); col*=1.0-0.85*k_; alpha*=1.0-0.75*k_;
-        gl_FragColor=vec4(col, alpha);
+        gl_FragColor=vec4(col + dRimGlow() * 0.7, max(alpha, length(dRimGlow()) * 0.5));
       }`,
   };
   let glass;

@@ -2,6 +2,7 @@ import { arcOnScreen } from '../core/arc.js';
 import { createFlash } from '../core/flash.js';
 import * as THREE from 'three';
 import { createForeground } from './foreground.js';
+import { STYLE, SIL, portalFront } from './style.js';
 
 // =====================================================================
 //  The story: one continuous camera, driven by scroll.
@@ -125,11 +126,13 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
     document.body.appendChild(b);
     return b;
   });
-  const hold = { on: false, p: 0, last: performance.now() };   // timed by the wall clock, so 3 s is 3 s on any device
+  const hold = { on: false, p: 0, last: performance.now() };
+  const dbg = { on: false };   // test hook: freeze the portal at a given radius
+  const freezePortal = (r, gem = 1) => { dbg.on = r != null; if (!dbg.on) return; toon.enabled = true; TU.uA.value = 0; TU.uB.value = 1; STYLE.uDCW.value.copy(holdAt[gem]); STYLE.uDFront.value = portalFront(r); };   // timed by the wall clock, so 3 s is 3 s on any device
   const setHoldText = () => holds.forEach((b) => { b.querySelector('b').textContent = world.drawn ? 'Return to reality' : 'Redraw the world'; b.setAttribute('aria-label', (world.drawn ? 'Hold to return to the real world' : 'Hold to redraw the world') + ' (3 seconds)'); });
   setHoldText();
-  holds.forEach((b) => {
-    const start = (e) => { if (world.busy) return; e.preventDefault(); hold.on = true; b.classList.add('down'); if (e.pointerId !== undefined) b.setPointerCapture(e.pointerId); if (!toon.enabled) { toon.enabled = true; TU.uA.value = TU.uB.value = world.drawn ? 1 : 0; TU.uWipe.value = 1; } };
+  holds.forEach((b, i) => {
+    const start = (e) => { if (world.busy) return; e.preventDefault(); hold.on = true; hold.gem = i; b.classList.add('down'); try { if (e.pointerId !== undefined) b.setPointerCapture(e.pointerId); } catch (_) { /* synthetic */ } if (hold.p <= 0) STYLE.uDCW.value.copy(holdAt[i]); };
     const stop = () => { hold.on = false; b.classList.remove('down'); };
     b.addEventListener('pointerdown', start);
     b.addEventListener('pointerup', stop); b.addEventListener('pointercancel', stop); b.addEventListener('lostpointercapture', stop);
@@ -139,25 +142,29 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
   });
   const toggle = document.getElementById('world-toggle');
   const setToggle = () => { if (!toggle) return; toggle.hidden = !(world.drawn || sessionStorage.getItem('kaju-shifted')); toggle.querySelector('span').textContent = world.drawn ? '◐ Real world' : '◑ Drawn world'; };
-  if (toggle) { setToggle(); toggle.addEventListener('click', () => wipeTo(!world.drawn, 1.3)); }
+  if (toggle) { setToggle(); toggle.addEventListener('click', () => wipeTo(!world.drawn, 1.8)); }
 
-  // the wipe that redraws the world (or brings reality back)
-  function wipeTo(drawn, dur = 1.5) {
+  // the portal that redraws the world (or brings reality back): it grows from the gem (or just ahead of the camera)
+  let wiping = false;
+  function wipeTo(drawn, dur = 2.2) {
     if (world.busy && !shift.active) return;
-    toon.enabled = true;
-    TU.uA.value = world.drawn ? 1 : 0; TU.uB.value = drawn ? 1 : 0; TU.uWipe.value = 0;
+    toon.enabled = true; wiping = true;
+    const opening = TU.uA.value !== TU.uB.value && STYLE.uDFront.value < 1;     // a preview is already open at a gem
+    if (!opening) {
+      cam.getWorldDirection(tmp);
+      STYLE.uDCW.value.copy(cam.position).addScaledVector(tmp, 7);
+      STYLE.uDFront.value = 0;
+    }
+    TU.uA.value = world.drawn ? 1 : 0; TU.uB.value = drawn ? 1 : 0;
     const st = { k: world.drawn ? 1 : 0 };
     const tl = gsap.timeline({ onComplete: () => {
-      TU.uA.value = TU.uB.value = drawn ? 1 : 0; TU.uWipe.value = 1; TU.uGlitch.value = 0;
-      toon.enabled = false;
+      TU.uA.value = TU.uB.value = drawn ? 1 : 0; STYLE.uDFront.value = 1; TU.uGlitch.value = 0;
+      toon.enabled = false; wiping = false;
       world.drawn = drawn; sessionStorage.setItem('kaju-style', drawn ? 'drawn' : 'real'); sessionStorage.setItem('kaju-shifted', '1');
       setHoldText(); setToggle();
     } });
-    tl.to(TU.uGlitch, { value: 1, duration: 0.18, ease: 'power2.in' }, 0)
-      .to(TU.uGlitch, { value: 0.25, duration: 0.5 }, 0.2)
-      .to(TU.uWipe, { value: 1, duration: dur, ease: 'power2.inOut' }, 0.12)
-      .to(st, { k: drawn ? 1 : 0, duration: dur, ease: 'power1.inOut', onUpdate: () => applyWorld(st.k) }, 0.12)
-      .to(TU.uGlitch, { value: 0, duration: 0.4 }, dur * 0.8);
+    tl.to(STYLE.uDFront, { value: 1, duration: dur, ease: 'power1.in' }, 0)
+      .to(st, { k: drawn ? 1 : 0, duration: dur, ease: 'power1.inOut', onUpdate: () => applyWorld(st.k) }, 0.1);
     return tl;
   }
 
@@ -181,7 +188,7 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
       .to(B.uSpeed, { value: 2.4, duration: 2.5, ease: 'power2.out' }, 4.4)
       .to(final.uniforms.uCA, { value: 0.008, duration: 0.8 }, 0)
       .to(final.uniforms.uCA, { value: 0.0012, duration: 1.5 }, 3.5)
-      .add(() => wipeTo(target, 1.7), 1.15);
+      .add(() => wipeTo(target, 2.6), 0.6);
   }
 
   function land(fast) {
@@ -240,10 +247,15 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
     }
     railU.uTime.value = t;
     // holding a gem charges the shift: a growing glitch and a rush on the timeline
-    if (!world.busy) {
+    if (!world.busy && !dbg.on) {
       const now = performance.now(), wdt = Math.min(0.25, (now - hold.last) / 1000); hold.last = now;
       hold.p = hold.on ? Math.min(1, hold.p + wdt / 3) : Math.max(0, hold.p - wdt * 1.8);
-      if (toon.enabled && TU.uWipe.value >= 1) TU.uGlitch.value = Math.pow(hold.p, 2.2) * 0.55;
+      // a small portal peeks open at the gem as you hold, and closes again if you let go
+      const cur = world.drawn ? 1 : 0;
+      if (hold.p > 0) {
+        toon.enabled = true; TU.uA.value = cur; TU.uB.value = 1 - cur;
+        STYLE.uDFront.value = portalFront(1.8 * (1 - Math.pow(1 - hold.p, 2)));
+      } else if (TU.uA.value !== TU.uB.value && !wiping) { TU.uA.value = TU.uB.value = cur; STYLE.uDFront.value = 1; toon.enabled = false; }
       if (hold.p > 0) { B.uSpeed.value = 2.4 + hold.p * hold.p * 30; pos.x += (Math.random() - 0.5) * hold.p * 0.06; pos.y += (Math.random() - 0.5) * hold.p * 0.05; }
       if (hold.p >= 1) startShift();
     }
@@ -279,6 +291,12 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
     pos.addScaledVector(right, mouse.sx * amp).addScaledVector(up, -mouse.sy * amp * 0.6);
     pos.y += Math.sin(t * 0.4) * 0.05;
     cam.position.copy(pos); cam.lookAt(tgt);
+    if (toon.enabled) {   // the portal's outline on screen, for the rim pass
+      cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+      const sil = uni.portal.silhouette(cam, TU.uRes.value.x, TU.uRes.value.y);
+      TU.uCenter.value.set(sil.x, sil.y); TU.uRad.value = sil.r; TU.uOn.value = sil.on;
+      Object.assign(SIL, sil, { resY: TU.uRes.value.y });
+    }
     if (Math.abs(cam.fov - fov) > 0.01) { cam.fov = fov; cam.updateProjectionMatrix(); }
     dom(sp, t, dt);
   }
@@ -383,5 +401,5 @@ export function createStory({ uni, lenis, tier, gsap, tunnel, final, bloom, toon
       .add(() => { location.href = page.href + '#slash'; }, 1.9);
   }
 
-  return { land, update, portal, shift: startShift, wipeTo, world, resize() {}, state: { fly, trans, shift, hold }, get sp() { return sp; }, set sp(v) { sp = v; } };
+  return { land, update, portal, shift: startShift, wipeTo, world, resize() {}, state: { fly, trans, shift, hold }, freezePortal, get sp() { return sp; }, set sp(v) { sp = v; } };
 }

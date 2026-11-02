@@ -21,7 +21,7 @@ catch (e) { document.body.classList.remove('is-intro'); document.body.classList.
 
 const { renderer, composer, renderPass, bloom, final, tunnel, toon } = core || {};
 // the post pass draws the wipe line where the materials switch worlds
-if (toon) { toon.uniforms.uA = STYLE.uDFrom; toon.uniforms.uB = STYLE.uDTo; toon.uniforms.uWipe = STYLE.uDFront; }
+if (toon) { toon.uniforms.uA = STYLE.uDFrom; toon.uniforms.uB = STYLE.uDTo; toon.uniforms.uWipe = STYLE.uDFront; toon.uniforms.uCenter = STYLE.uDCenter; toon.uniforms.uBT = STYLE.uDTime; }
 const intro = createIntro(tier);
 // the brain floats in the upper half, the words sit below it (portrait screens pull back a little)
 const liftFor = () => { const tall = innerHeight / innerWidth > 1.2; intro.state.dist = tall ? 6.4 : 5.6; return tall ? 1.45 : 1.25; };

@@ -89,7 +89,7 @@ export function createDrawn({ tier, planets }) {
           float fres = pow(1.0 - max(dot(N, V), 0.0), 4.0);
           col += dLin(vec3(0.85,0.82,1.0)) * fres * smoothstep(0.0, 0.5, ndl) * 0.3;
           col *= 0.93 + 0.12 * dGrain();
-          gl_FragColor = vec4(col, 1.0);
+          gl_FragColor = vec4(col + dRimGlow(), 1.0);
         }`,
     });
     const skin = new THREE.Mesh(new THREE.SphereGeometry(pl.radius * 1.004, 128, 80), mat);
@@ -129,7 +129,7 @@ export function createDrawn({ tier, planets }) {
             c += dLin(vec3(1.0)) * band(x, 0.31, 0.006) * 0.5;
             c *= 0.8 * (0.94 + 0.1 * dGrain());
             if (a < 0.01) discard;
-            gl_FragColor = vec4(c, a);
+            gl_FragColor = vec4(c + dRimGlow() * 0.6, a);
           }`,
       });
       const ring = new THREE.Mesh(pl.ringMesh.geometry, ringMat);

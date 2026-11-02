@@ -328,10 +328,32 @@ export function initJourney(root) {
     if (wipe) {
       drawWorld(lbg, wipe.from, c); drawThings(lbg, c);
       drawWorld(lg, wipe.to, c); drawThings(lg, c);
-      // the new style sweeps in from the left with a bright edge
-      const ex = Math.round(wipe.k * (VW + 40));
-      lbg.save(); lbg.beginPath(); lbg.moveTo(ex, 0); lbg.lineTo(ex - 30, VH); lbg.lineTo(-10, VH); lbg.lineTo(-10, 0); lbg.closePath(); lbg.clip(); lbg.drawImage(low, 0, 0); lbg.restore();
-      lbg.fillStyle = '#ffffff'; lbg.beginPath(); lbg.moveTo(ex, 0); lbg.lineTo(ex + 4, 0); lbg.lineTo(ex - 26, VH); lbg.lineTo(ex - 30, VH); lbg.fill();
+      // the new style opens around Kaju as a portal: a churning blob with a rainbow rim, glitter and an RGB split
+      const cx = P.x + P.w / 2 - c, cy = P.y + P.h / 2;
+      const far = Math.max(Math.hypot(cx, cy), Math.hypot(VW - cx, cy), Math.hypot(cx, VH - cy), Math.hypot(VW - cx, VH - cy));
+      const R = Math.pow(wipe.k, 1.6) * far * 1.35, edge = [];
+      for (let i = 0; i < 160; i++) {
+        const a = (i / 160) * Math.PI * 2;
+        const e = R * (1 + 0.1 * Math.sin(3 * a + time * 2.3 + 1.7) + 0.06 * Math.sin(7 * a - time * 3.1) + 0.04 * Math.sin(13 * a + time * 4.7));
+        edge.push([cx + Math.cos(a) * e, cy + Math.sin(a) * e, a]);
+      }
+      const path = (ctx) => { ctx.beginPath(); edge.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); };
+      // RGB split: the new world, ghosted red/cyan just outside the rim
+      lbg.save(); path(lbg); lbg.clip();
+      lbg.globalAlpha = 0.35; lbg.globalCompositeOperation = 'lighter';
+      lbg.drawImage(low, -2, 0); lbg.drawImage(low, 2, 0);
+      lbg.globalAlpha = 1; lbg.globalCompositeOperation = 'source-over';
+      lbg.restore();
+      lbg.save(); lbg.beginPath(); edge.forEach(([x, y, a], i) => { const k = 0.97; const px = cx + (x - cx) * k, py = cy + (y - cy) * k; i ? lbg.lineTo(px, py) : lbg.moveTo(px, py); }); lbg.closePath(); lbg.clip(); lbg.drawImage(low, 0, 0); lbg.restore();
+      // the rim: rainbow pixels that churn, and glitter thrown off both sides
+      lbg.lineCap = 'round';
+      for (let i = 0; i < edge.length; i++) {
+        const [x, y, a] = edge[i], [x2, y2] = edge[(i + 1) % edge.length];
+        const hue = (a / (Math.PI * 2) * 360 + time * 140) % 360;
+        lbg.strokeStyle = `hsla(${hue},95%,68%,.85)`; lbg.lineWidth = 3; lbg.beginPath(); lbg.moveTo(x, y); lbg.lineTo(x2, y2); lbg.stroke();
+        lbg.strokeStyle = '#ffffff'; lbg.lineWidth = 1; lbg.beginPath(); lbg.moveTo(x, y); lbg.lineTo(x2, y2); lbg.stroke();
+        if (Math.random() < 0.35) { const d = (Math.random() - 0.4) * 16; lbg.fillStyle = Math.random() < 0.5 ? '#ffffff' : `hsl(${hue},95%,75%)`; lbg.fillRect(Math.round(x + Math.cos(a) * d), Math.round(y + Math.sin(a) * d), 1, 1); }
+      }
       g.drawImage(lowB, 0, 0, VW * Rz, VH * Rz);
     } else {
       drawWorld(lg, theme, c); drawThings(lg, c);
@@ -395,7 +417,7 @@ export function initJourney(root) {
     for (let i = parts.length - 1; i >= 0; i--) if (parts[i].age > parts[i].life) parts.splice(i, 1);
     for (const p of pops) p.t += dt;
     for (let i = pops.length - 1; i >= 0; i--) if (pops[i].t > 1.2) pops.splice(i, 1);
-    if (wipe) { wipe.k += dt / 0.75; if (wipe.k >= 1) wipe = null; }
+    if (wipe) { wipe.k += dt / 1.1; if (wipe.k >= 1) wipe = null; }
     // camera
     const target = state === 'title' ? 0 : P.x + P.w / 2 - VW * 0.42 + P.face * 18;
     cam += (clamp(target, 0, L.w - VW) - cam) * Math.min(1, dt * 4.5);

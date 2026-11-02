@@ -1,4 +1,4 @@
-import { STYLE } from './style.js';
+import { STYLE, SIL } from './style.js';
 
 // =====================================================================
 //  The foreground: big out-of-focus asteroids drifting past the lens
@@ -26,11 +26,13 @@ export function createForeground() {
   addEventListener('pointermove', move, { passive: true });
   addEventListener('pointerdown', move, { passive: true });
 
-  // the wipe line, in CSS percentages: drawn where x*0.82 + y*0.18 <= f
-  const clip = (behind) => {
-    const f = STYLE.uDFront.value * 1.12 - 0.06;
-    const x0 = (f / 0.82) * 100, x1 = ((f - 0.18) / 0.82) * 100;
-    return behind ? `polygon(-5% -5%, ${x0}% -5%, ${x1}% 105%, -5% 105%)` : `polygon(${x0}% -5%, 105% -5%, 105% 105%, ${x1}% 105%)`;
+  // the portal's outline on screen (a churning circle), in CSS pixels: inside = the new world
+  const clip = (inside) => {
+    const W = innerWidth, H = innerHeight;
+    if (SIL.inside) return inside ? 'none' : 'polygon(0 0, 0 0, 0 0)';
+    const k = H / SIL.resY, r = SIL.on ? SIL.r * k : 0, cx = SIL.x * W, cy = (1 - SIL.y) * H, t = STYLE.uDTime.value, pts = [];
+    for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2, e = r * (1 + 0.05 * Math.sin(3 * a + t * 1.1) + 0.03 * Math.sin(7 * a - t * 1.6)); pts.push(`${(cx + Math.cos(a) * e).toFixed(1)}px ${(cy - Math.sin(a) * e).toFixed(1)}px`); }
+    return inside ? `polygon(${pts.join(',')})` : `polygon(evenodd, -10px -10px, ${W + 10}px -10px, ${W + 10}px ${H + 10}px, -10px ${H + 10}px, -10px -10px, ${pts.join(',')})`;
   };
   return {
     update(t, dt, show) {
@@ -39,7 +41,7 @@ export function createForeground() {
       // which layer is visible where
       const a = STYLE.uDFrom.value, b = STYLE.uDTo.value;
       if (a === b) { drawn.style.clipPath = real.style.clipPath = 'none'; drawn.style.display = b ? '' : 'none'; real.style.display = b ? 'none' : ''; }
-      else { drawn.style.display = real.style.display = ''; drawn.style.clipPath = clip(b === 1); real.style.clipPath = clip(b === 0); }
+      else { drawn.style.display = real.style.display = ''; drawn.style.clipPath = clip(b === 1); real.style.clipPath = clip(b === 0); }   // b: the world inside the portal
       if (show < 0.01) return;
       const W = innerWidth, H = innerHeight, S = Math.min(W, H);
       for (const r of rocks) {

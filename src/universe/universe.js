@@ -8,7 +8,8 @@ import { createThrone, createRocks } from './props.js';
 import { createSignpost } from './signpost.js';
 import { createAtmosphere } from './atmos.js';
 import { createDrawn } from './drawn.js';
-import { STYLE, fadeInDrawn, drawnify } from './style.js';
+import { STYLE, fadeInDrawn, drawnify, portalRadius } from './style.js';
+import { createPortalFx } from './portal.js';
 
 // =====================================================================
 //  The Universe — the Blender scene rebuilt live for the web.
@@ -24,6 +25,7 @@ export async function createUniverse(renderer, tier) {
   const sky = await createSky(renderer, tier, loader);
   const env = sky.env;
   scene.add(sky.group);
+  const portal = createPortalFx({ tier }); scene.add(portal.points);
   scene.environment = env; scene.environmentIntensity = 0.45;
   scene.background = new THREE.Color(0x000000);
   // depth: distant objects sink into a deep blue haze
@@ -169,6 +171,11 @@ export async function createUniverse(renderer, tier) {
   // =================== frame ===================
   function update(t, dt) {
     STYLE.uDTime.value = t;
+    // the portal reads each pixel's world position from the camera
+    camera.updateMatrixWorld();
+    STYLE.uDInvProj.value.copy(camera.projectionMatrixInverse); STYLE.uDCamW.value.copy(camera.matrixWorld);
+    STYLE.uDR.value = portalRadius(STYLE.uDFront.value);
+    portal.update(camera);
     sky.update(t, camera, 0);
     motes.uniforms.uTime.value = t; motes.uniforms.uCam.value.copy(camera.position);
     for (const u of updaters) u(t, dt, camera);
@@ -177,6 +184,7 @@ export async function createUniverse(renderer, tier) {
   function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); bridge.resize(); setRes(); }
 
   return {
+    portal,
     scene, camera, update, resize, bridge, tree, throne, rocks, planets, sky, sign, atmos, DECK_Y, PLAZA,
     // 0 = the real world, 1 = the drawn world (sky goes black, clouds go big and violet)
     setStyle(k) {

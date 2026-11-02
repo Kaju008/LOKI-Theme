@@ -112,47 +112,50 @@ const FinalShader = {
 
 
 // ---------------------------------------------------------------------
-// The drawn world: posterized into a risograph palette (ink black, indigo,
-// violet, lavender, mint, cream) with soft ink outlines and print grain.
-// uA → uB is the style before/after; uWipe sweeps the change across the
-// screen with a glitching digital edge. uGlitch shakes the whole frame.
+// The portal's rim on screen. The world change itself happens per pixel in
+// 3D (see universe/style.js); this pass draws the sphere's silhouette like a
+// Gaussian-splat portal: a turbulent edge that smears and bends the picture,
+// an RGB glitch split, a soap-bubble rainbow film, a white core and sparkles.
+// uCenter/uRad: the silhouette (0–1, pixels) · uOn: 0 when the camera is inside.
 // ---------------------------------------------------------------------
 const ToonShader = {
   uniforms: {
     tDiffuse: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uTime: { value: 0 },
     uA: { value: 0 }, uB: { value: 0 }, uWipe: { value: 1 }, uGlitch: { value: 0 },
+    uCenter: { value: new THREE.Vector2(0.5, 0.5) }, uRad: { value: 0 }, uOn: { value: 0 }, uBT: { value: 0 },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
   fragmentShader: /* glsl */ `
-    uniform sampler2D tDiffuse; uniform vec2 uRes; uniform float uTime, uA, uB, uWipe, uGlitch; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform vec2 uRes, uCenter; uniform float uTime, uA, uB, uWipe, uGlitch, uRad, uOn, uBT; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     float vn(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
-    float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }
-    // banded ramp: hard-ish steps with a sliver of softness, like ink layers
-    vec3 ramp5(float t, vec3 a, vec3 b, vec3 c, vec3 d, vec3 e){
-      t = clamp(t, 0.0, 1.0) * 4.0; float i = floor(t); float f = smoothstep(0.82, 1.0, fract(t));
-      vec3 lo = i < 1.0 ? a : i < 2.0 ? b : i < 3.0 ? c : i < 4.0 ? d : e;
-      vec3 hi = i < 1.0 ? b : i < 2.0 ? c : i < 3.0 ? d : e;
-      return mix(lo, hi, f);
-    }
     void main(){
-      vec2 uv = vUv;
-      // whole-frame glitch: row tears and block jumps
-      float row = floor(uv.y * 48.0), blk = floor(uv.y * 9.0);
-      float tear = (h(vec2(row, floor(uTime * 24.0))) - 0.5) * 0.05 * uGlitch * step(0.72, h(vec2(row * 1.7, floor(uTime * 16.0))));
-      tear += (h(vec2(blk, floor(uTime * 9.0))) - 0.5) * 0.02 * uGlitch;
-      uv.x += tear;
-      // the wipe front: a diagonal sweep with a stepped digital edge
-      float s = uv.x * 0.82 + (1.0 - uv.y) * 0.18 + (h(vec2(floor(uv.y * 64.0), 3.0)) - 0.5) * 0.035;
-      float f = uWipe * 1.12 - 0.06;
-      float band = 1.0 - smoothstep(0.0, 0.035, abs(s - f));
-      band *= step(0.001, abs(uB - uA)) * step(0.001, uWipe) * step(uWipe, 0.999);
-      // RGB split at the edge and while glitching
-      float split = (band * 0.012 + uGlitch * 0.006);
-      vec3 real = vec3(texture2D(tDiffuse, uv + vec2(split, 0.0)).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - vec2(split, 0.0)).b);
-      vec3 col = real;
-      // a bright mint scan line rides the front
-      col += vec3(0.55, 1.0, 0.85) * band * (0.55 + 0.45 * h(vec2(floor(uv.y * 120.0), floor(uTime * 30.0))));
+      vec2 px = vUv * uRes, c = uCenter * uRes, d = px - c;
+      float L = length(d), a = atan(d.y, d.x), t = uBT;
+      float on = uOn * step(0.001, abs(uB - uA));
+      float w = max(4.0, uRad * 0.04);
+      // turbulence: the edge churns as it moves
+      float turb = vn(vec2(a * 2.5 + t * 0.8, t * 0.5)) * 0.6 + vn(vec2(a * 7.0 - t * 1.3, 3.0 + t)) * 0.4;
+      float sd = L - uRad * (1.0 + (turb - 0.5) * 0.18);
+      float band = exp(-pow(sd / (w * 1.7), 2.0)) * on;
+      // the picture smears and bends along the rim (a flowing noise field)
+      vec2 flow = vec2(vn(px / 38.0 + t * 1.6) - 0.5, vn(px / 38.0 + 9.0 - t * 1.3) - 0.5);
+      vec2 n = d / max(L, 1.0);
+      vec2 uv = vUv + (flow * w * 1.1 + n * w * 0.3 * sin(t * 3.0 + a * 5.0)) * band / uRes;
+      // RGB glitch: a colour split across the rim, with a few torn rows
+      float tear = step(0.86, h(vec2(floor(px.y / 3.0), floor(t * 24.0)))) * band;
+      vec2 split = n * (1.5 + 7.0 * band) * band / uRes + vec2(tear * 0.008, 0.0);
+      vec3 col = vec3(texture2D(tDiffuse, uv + split).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - split).b);
+      // soap-bubble film and a white-hot core
+      float core = exp(-pow(sd / (w * 0.28), 2.0)) * on;
+      vec3 iri = 0.6 + 0.4 * cos(6.2832 * (a / 6.2832 + t * 0.08 + sd / (w * 6.0) + vec3(0.0, 0.33, 0.67)));
+      col += iri * band * 0.26 + vec3(1.0, 0.95, 1.0) * core * 0.3;
+      // glitter thrown off the edge
+      // dense glitter thrown off the edge, drifting outward over time (fine + coarse)
+      float drift = fract(t * 0.6 + h(floor(vec2(a * 40.0, 1.0))));
+      float zone = exp(-pow((sd - drift * w * 4.0) / (w * 3.0), 2.0));
+      vec2 cell = floor(px / 2.0), cell2 = floor(px / 5.0);
+      col += (step(0.955, h(cell + floor(t * 16.0))) * 0.9 + step(0.985, h(cell2 + floor(t * 9.0))) * 1.6) * zone * on * mix(iri, vec3(1.0), 0.55);
       gl_FragColor = vec4(col, 1.0);
     }`,
 };
